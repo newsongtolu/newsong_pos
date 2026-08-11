@@ -56,11 +56,6 @@ RUN chmod +x bin/* && \
     sed -i "s/\r$//g" bin/* && \
     sed -i 's/ruby\.exe$/ruby/' bin/*
 
-# Precompiling assets for production using an in-memory sqlite database for the build
-RUN DATABASE_URL=sqlite3::memory: \
-    RAILS_MASTER_KEY=1234567890abcdef1234567890abcdef \
-    SECRET_KEY_BASE_DUMMY=1 \
-    bundle exec rails assets:precompile
 
 # Final stage for app image
 FROM base
