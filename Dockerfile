@@ -1,12 +1,6 @@
 # syntax=docker/dockerfile:1
 # check=error=true
 
-# This Dockerfile is designed for production, not development. Use with Kamal or build'n'run by hand:
-# docker build -t newsong_pos .
-# docker run -d -p 80:80 -e RAILS_MASTER_KEY=<value from config/master.key> --name newsong_pos newsong_pos
-
-# For a containerized dev environment, see Dev Containers: https://guides.rubyonrails.org/getting_started_with_devcontainer.html
-
 # Make sure RUBY_VERSION matches the Ruby version in .ruby-version
 ARG RUBY_VERSION=3.3.12
 FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
@@ -60,15 +54,12 @@ RUN chmod +x bin/* && \
 # Final stage for app image
 FROM base
 
-# Run and own only the runtime files as a non-root user for security
-RUN groupadd --system --gid 1000 rails && \
-    useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash
-RUN mkdir -p db log storage tmp && chown -R rails:rails db log storage tmp
-USER 1000:1000
+# Ensure standard directories and the Render persistent mount point exist with proper root access
+RUN mkdir -p db log storage tmp /data
 
-# Copy built artifacts: gems, application
-COPY --chown=rails:rails --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
-COPY --chown=rails:rails --from=build /rails /rails
+# Copy built artifacts: gems, application (running as root for smooth disk mounting)
+COPY --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
+COPY --from=build /rails /rails
 
 # Entrypoint prepares the database.
 ENTRYPOINT ["/rails/bin/docker-entrypoint"]
