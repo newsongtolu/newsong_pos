@@ -1,5 +1,5 @@
 module Dispatch
-  class OrdersController < BaseController
+  class OrdersController < ::BaseController
     def index
       @orders = Order.where(status: ["ready", "dispatched"]).order(created_at: :asc)
     end
