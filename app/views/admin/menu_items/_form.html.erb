@@ -1,0 +1,4 @@
+<div class="field">
+  <%= f.label :category_id, "Category" %>
+  <%= f.collection_select :category_id, Category.all, :id, :name, { prompt: "Select a category" }, { class: "your-input-class-name" } %>
+</div>

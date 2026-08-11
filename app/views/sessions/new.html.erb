@@ -1,0 +1,25 @@
+<div class="min-h-screen flex items-center justify-center bg-[#0f172a] px-4">
+  <div class="max-w-md w-full bg-[#1e293b] p-8 rounded-2xl border border-slate-700/80 shadow-2xl space-y-6">
+    <div class="text-center space-y-2">
+      <span class="inline-block text-[10px] font-extrabold text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+        Staff Portal Security
+      </span>
+      <h2 class="text-2xl font-black text-white tracking-tight">Staff & Management Sign In</h2>
+      <p class="text-xs text-slate-400">Enter your credentials to receive your daily verification code.</p>
+    </div>
+
+    <%= form_with scope: :user, url: user_session_path, method: :post, local: true, data: { turbo: false }, class: "space-y-4" do |f| %>
+      <div class="space-y-1">
+        <label class="text-xs font-bold text-slate-300 uppercase">Email Address</label>
+        <%= f.email_field :email, required: true, class: "w-full bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-emerald-500" %>
+      </div>
+
+      <div class="space-y-1">
+        <label class="text-xs font-bold text-slate-300 uppercase">Password</label>
+        <%= f.password_field :password, required: true, class: "w-full bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-emerald-500" %>
+      </div>
+
+      <%= f.submit "Continue to Verification", class: "w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-4 rounded-xl transition text-center shadow-lg cursor-pointer text-sm mt-2" %>
+    <% end %>
+  </div>
+</div>

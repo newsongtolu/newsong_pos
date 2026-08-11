@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Super Admin Control Center</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --bg-main: #0b0f19; --bg-card: #151c2c; --border-color: #26334d;
+      --text-main: #f1f5f9; --text-muted: #94a3b8; --accent: #f59e0b;
+    }
+    body { background-color: var(--bg-main); color: var(--text-main); font-family: system-ui, sans-serif; margin: 0; padding: 20px; }
+    .container { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+    .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; }
+    .btn { background: var(--accent); color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-block; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <h1 style="margin: 0; font-size: 1.4rem; color: #f59e0b;">⚡ Super Admin Master Command</h1>
+        <p style="margin: 4px 0 0 0; color: var(--text-muted); font-size: 0.85rem;">Global system overview and multi-tenant management.</p>
+      </div>
+      <%= link_to "← Regular Admin", "/admin/dashboards", class: "btn", style: "background: #374151;" %>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px;">
+      <div class="card">
+        <p style="margin: 0; color: var(--text-muted); font-size: 0.8rem;">Global System Revenue</p>
+        <h2 style="margin: 8px 0 0 0; font-size: 1.6rem; color: #34d399;">₦<%= number_with_delimiter(@total_system_revenue) %></h2>
+      </div>
+      <div class="card">
+        <p style="margin: 0; color: var(--text-muted); font-size: 0.8rem;">Total System Users</p>
+        <h2 style="margin: 8px 0 0 0; font-size: 1.6rem; color: #60a5fa;"><%= @total_users %></h2>
+      </div>
+      <div class="card">
+        <p style="margin: 0; color: var(--text-muted); font-size: 0.8rem;">Active Stations</p>
+        <h2 style="margin: 8px 0 0 0; font-size: 1.6rem; color: #facc15;"><%= @active_stations %></h2>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Super Admin Modules</h3>
+  <div style="display: flex; gap: 12px; margin-top: 12px;">
+    <%= link_to "Manage All System Users", super_admin_users_path, class: "btn", style: "background: #d97706;" %>
+    <%= link_to "System Configuration", super_admin_settings_path, class: "btn", style: "background: #374151;", data: { turbo: false } %>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

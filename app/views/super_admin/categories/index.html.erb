@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Manage Menu Categories - Super Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root { --bg-main: #0b0f19; --bg-card: #151c2c; --border-color: #26334d; --text-main: #f1f5f9; --text-muted: #94a3b8; --accent: #f59e0b; }
+    body { background-color: var(--bg-main); color: var(--text-main); font-family: system-ui, sans-serif; margin: 0; padding: 20px; }
+    .container { max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+    .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; }
+    .btn { background: var(--accent); color: white; border: none; padding: 8px 14px; border-radius: 6px; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-block; font-size: 0.9rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; text-align: left; }
+    th, td { padding: 12px; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; }
+    th { color: var(--text-muted); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <h1 style="margin: 0; font-size: 1.4rem; color: #f59e0b;">📂 Menu Categories Control</h1>
+        <p style="margin: 4px 0 0 0; color: var(--text-muted); font-size: 0.85rem;">Add, rename, or delete food and drink categories dynamically.</p>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <%= link_to "+ Add New Category", new_super_admin_category_path, class: "btn" %>
+        <%= link_to "← Dashboard", super_admin_dashboards_path, class: "btn", style: "background: #374151;" %>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Category Name</th>
+              <th>Description</th>
+              <th>Linked Items Count</th>
+              <th style="text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if @categories.any? %>
+              <% @categories.each do |cat| %>
+                <tr>
+                  <td style="font-weight: 500; color: #facc15;"><%= cat.name %></td>
+                  <td style="color: var(--text-muted);"><%= cat.description.presence || "No description provided." %></td>
+                  <td><%= cat.menu_items.count %> items</td>
+                  <td style="text-align: right; display: flex; gap: 8px; justify-content: flex-end; align-items: center;">
+                    <%= link_to "Edit", edit_super_admin_category_path(cat), class: "btn", style: "background: #2563eb; padding: 6px 10px; font-size: 0.75rem;" %>
+                    <%= button_to "Delete", super_admin_category_path(cat), method: :delete, data: { turbo_method: :delete, turbo_confirm: "Are you sure? Items in this category will become uncategorized." }, class: "btn", style: "background: #dc2626; padding: 6px 10px; font-size: 0.75rem;" %>
+                  </td>
+                </tr>
+              <% end %>
+            <% else %>
+              <tr>
+                <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 30px;">No categories created yet. Add your first category above!</td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Newsong Cookitz House - Smart Container POS (Cashier Edit)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <%= csrf_meta_tags %>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --bg-main: #0b0f19;
+      --bg-card: #151c2c;
+      --border-color: #26334d;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent: #10b981;
+      --accent-hover: #059669;
+      --brand-top: #94a3b8;
+      --brand-bottom: #34d399;
+    }
+    body.light-mode {
+      --bg-main: #f8fafc;
+      --bg-card: #ffffff;
+      --border-color: #e2e8f0;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --accent: #059669;
+      --accent-hover: #047857;
+      --brand-top: #64748b;
+      --brand-bottom: #059669;
+    }
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      overflow-x: hidden;
+      transition: background-color 0.3s ease, color 0.3s ease;
+      box-sizing: border-box;
+    }
+    *, *:before, *:after { box-sizing: inherit; }
+    
+    /* MODAL INVERSION RULES */
+    body:not(.light-mode) .cart-modal-content {
+      background-color: #ffffff !important;
+      color: #0f172a !important;
+      border-color: #cbd5e1 !important;
+    }
+    body:not(.light-mode) .cart-modal-header h3,
+    body:not(.light-mode) .form-group label,
+    body:not(.light-mode) .summary-row {
+      color: #475569 !important;
+    }
+    body:not(.light-mode) .form-input,
+    body:not(.light-mode) .form-select {
+      background-color: #f8fafc !important;
+      color: #0f172a !important;
+      border-color: #cbd5e1 !important;
+    }
+    body:not(.light-mode) .form-select option {
+      background-color: #ffffff !important;
+      color: #0f172a !important;
+    }
+    body:not(.light-mode) .modal-inner-box {
+      background-color: #f8fafc !important;
+      color: #0f172a !important;
+      border-color: #cbd5e1 !important;
+    }
+    body.light-mode .cart-modal-content {
+      background-color: #1e293b !important;
+      color: #f8fafc !important;
+      border-color: #334155 !important;
+    }
+    body.light-mode .cart-modal-header h3,
+    body.light-mode .form-group label,
+    body.light-mode .summary-row {
+      color: #94a3b8 !important;
+    }
+    body.light-mode .form-input,
+    body.light-mode .form-select {
+      background-color: #0f172a !important;
+      color: #f8fafc !important;
+      border-color: #334155 !important;
+    }
+    body.light-mode .form-select option {
+      background-color: #0f172a !important;
+      color: #f8fafc !important;
+    }
+    body.light-mode .modal-inner-box {
+      background-color: #0f172a !important;
+      color: #f8fafc !important;
+      border-color: #334155 !important;
+    }
+    
+    /* COMPACT THEME TOGGLE BUTTON */
+    .theme-toggle-btn {
+      background: var(--bg-main);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      flex-shrink: 0;
+    }
+    .theme-toggle-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .theme-toggle-btn svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+    }
+    
+    /* TOAST & GUIDANCE BANNER */
+    .toast-notif {
+      position: fixed; top: 20px; right: 20px; z-index: 500;
+      transform: translateY(-200%); transition: transform 0.3s ease-in-out;
+      background: #0f172a; color: white; padding: 16px 20px; border-radius: 12px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3); display: flex; align-items: center; gap: 12px;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .toast-notif.show { transform: translateY(0); }
+    
+    .guidance-banner {
+      position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-200%); z-index: 500;
+      transition: transform 0.3s ease-in-out; background: #f59e0b; color: #0f172a; padding: 14px 20px;
+      border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3); display: flex; align-items: center; gap: 12px;
+      max-width: 440px; width: 90%; font-weight: 500; border: 1px solid #fbbf24;
+    }
+    .guidance-banner.show { transform: translateX(-50%) translateY(0); }
+    
+    /* MAIN APP LAYOUT */
+    #main-app { display: flex; width: 100%; min-height: 100vh; flex-direction: column; align-items: center; }
+    header {
+      position: sticky; top: 0; z-index: 90;
+      background: var(--bg-card); border-bottom: 1px solid var(--border-color);
+      padding: 14px 0; backdrop-filter: blur(8px); width: 100%; display: flex; justify-content: center;
+    }
+    .header-inner { max-width: 1100px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; width: 100%; }
+    
+    .brand-container { display: flex; flex-direction: column; text-align: left; }
+    .logo-top { font-size: 0.65rem; font-weight: 700; color: var(--brand-top); text-transform: uppercase; letter-spacing: 1.5px; }
+    .logo-bottom { font-size: 1.05rem; font-weight: 800; color: var(--brand-bottom); letter-spacing: 0.5px; margin-top: 2px; }
+    
+    .header-actions { display: flex; align-items: center; gap: 8px; }
+    .mode-indicator { background: rgba(16, 185, 129, 0.15); color: var(--accent); border: 1px solid rgba(16, 185, 129, 0.3); padding: 5px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
+    
+    .header-tray-btn {
+      background: var(--bg-main); border: 1px solid var(--border-color);
+      padding: 6px 10px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px;
+      transition: all 0.2s ease; color: var(--text-main); position: relative;
+    }
+    .header-tray-btn:hover { border-color: var(--accent); }
+    .cart-icon-svg { width: 15px; height: 15px; fill: var(--text-main); }
+    .cart-counter-badge {
+      position: absolute; top: -5px; right: -5px; background: var(--accent); color: white;
+      font-size: 0.6rem; font-weight: 800; padding: 2px 5px; border-radius: 9999px;
+    }
+    .main-container { max-width: 1100px; margin: 0 auto; padding: 24px 16px; width: 100%; flex: 1; display: flex; flex-direction: column; align-items: center; box-sizing: border-box; }
+    .banner { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; width: 100%; max-width: 1000px; text-align: left; }
+    .banner h2 { margin: 0 0 6px 0; color: var(--brand-bottom); font-size: 1.1rem; }
+    .banner p { margin: 0; color: var(--text-muted); font-size: 0.8rem; line-height: 1.4; }
+    
+    /* AUTOMATIC CONTAINER BUILDER SECTION */
+    #container-builder-section { display: none; margin-bottom: 24px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px 22px; width: 100%; max-width: 1000px; text-align: left; }
+    .container-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 10px; width: 100%; }
+    .container-header-row h3 { margin: 0; font-size: 0.95rem; color: var(--text-main); }
+    
+    .add-container-btn { 
+      background: linear-gradient(135deg, var(--accent), #059669); 
+      color: white; border: none; padding: 8px 16px; border-radius: 8px; 
+      font-size: 0.75rem; font-weight: 700; cursor: pointer; display: inline-flex; 
+      align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+      transition: all 0.25s ease; 
+    }
+    .add-container-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4); background: var(--accent-hover); }
+    .containers-list { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; width: 100%; }
+    .container-card-box { background: var(--bg-main); border: 1px solid var(--accent); padding: 14px; border-radius: 10px; font-size: 0.8rem; width: 100%; box-shadow: 0 0 0 1px var(--accent); }
+    .container-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 8px; width: 100%; }
+    .container-items-preview { font-size: 0.75rem; color: var(--text-muted); padding: 6px 0 0 0; border-top: 1px dashed var(--border-color); margin-top: 6px; }
+    
+    /* SEARCH BAR & CATEGORIES */
+    .search-bar-container { width: 100%; max-width: 1000px; margin-bottom: 16px; }
+    .categories { display: flex; justify-content: center; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 24px; width: 100%; max-width: 1000px; }
+    .cat-btn { background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-muted); padding: 7px 14px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .cat-btn:hover { background: var(--bg-main); color: var(--text-main); border-color: var(--text-muted); }
+    .cat-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; justify-content: center; width: 100%; max-width: 1000px; }
+    .menu-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between; width: 100%; text-align: left; }
+    .menu-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 6px; width: 100%; }
+    .menu-title { font-size: 0.85rem; font-weight: bold; color: var(--text-main); margin: 0; }
+    .menu-cat { font-size: 0.6rem; background: var(--bg-main); color: var(--brand-bottom); padding: 2px 5px; border-radius: 4px; font-family: monospace; text-transform: uppercase; border: 1px solid var(--border-color); white-space: nowrap; }
+    .menu-desc { font-size: 0.75rem; color: var(--text-muted); margin: 8px 0 14px 0; line-height: 1.4; min-height: 32px; }
+    
+    .menu-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 12px; width: 100%; }
+    .price { font-weight: 800; color: var(--brand-bottom); font-size: 0.9rem; }
+    
+    .stepper { display: flex; align-items: center; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; }
+    .step-btn { background: var(--bg-card); color: var(--text-main); border: none; width: 30px; height: 30px; font-weight: bold; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .step-btn:hover { background: var(--accent); color: white; }
+    .step-count { padding: 0 10px; font-size: 0.8rem; font-weight: bold; color: var(--text-main); min-width: 18px; text-align: center; }
+    
+    /* REFINED CHECKOUT POP-UP MODAL */
+    #cart-modal { 
+      position: fixed; inset: 0; width: 100vw; height: 100vh; 
+      background: rgba(11, 15, 25, 0.85); backdrop-filter: blur(6px); 
+      z-index: 100; display: none; align-items: center; justify-content: center; 
+      padding: 16px; box-sizing: border-box; text-align: left; 
+    }
+    .cart-modal-content { 
+      border-radius: 18px; padding: 24px; max-width: 520px; width: 100%; 
+      margin: auto; box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4); 
+      max-height: 90vh; display: flex; flex-direction: column; 
+      box-sizing: border-box; position: relative;
+    }
+    .cart-modal-header { 
+      display: flex; justify-content: space-between; align-items: center; 
+      border-bottom: 1px solid var(--border-color); padding-bottom: 12px; 
+      margin-bottom: 14px; width: 100%; flex-shrink: 0; 
+    }
+    .cart-modal-header h3 { margin: 0; font-size: 1.1rem; font-weight: 800; }
+    .close-modal-btn { 
+      background: var(--bg-main); border: 1px solid var(--border-color); 
+      color: var(--text-muted); width: 32px; height: 32px; border-radius: 8px; 
+      font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .close-modal-btn:hover { color: var(--text-main); border-color: var(--accent); }
+    
+    .form-group { margin-bottom: 12px; width: 100%; text-align: left; }
+    .form-group label { display: block; font-size: 0.7rem; font-weight: bold; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-input, .form-select { width: 100%; padding: 10px 12px; border-radius: 8px; font-size: 0.85rem; border: 1px solid var(--border-color); box-sizing: border-box; }
+    .form-input:focus, .form-select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.15); }
+    
+    .modal-inner-box {
+      background: var(--bg-main);
+      border: 1px dashed var(--border-color);
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      font-size: 0.8rem;
+    }
+    .cart-items-list { 
+      overflow-y: auto; 
+      max-height: 35vh; 
+      margin-bottom: 12px; 
+      border-top: 1px dashed var(--border-color); 
+      border-bottom: 1px dashed var(--border-color); 
+      padding: 8px 0; 
+      width: 100%; 
+    }
+    .cart-container-row { padding: 8px 0; border-bottom: 1px solid var(--border-color); font-size: 0.8rem; width: 100%; text-align: left; }
+    .cart-container-row:last-child { border-bottom: none; }
+    
+    .cart-form-scrollable {
+      overflow-y: auto;
+      max-height: 32vh;
+      padding-right: 4px;
+      margin-bottom: 10px;
+      width: 100%;
+    }
+    .cart-summary-box { border-top: 1px solid var(--border-color); padding-top: 12px; width: 100%; flex-shrink: 0; }
+    .summary-row { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 6px; width: 100%; }
+    .summary-total { display: flex; justify-content: space-between; font-size: 0.95rem; font-weight: 800; color: var(--brand-bottom); border-top: 1px solid var(--border-color); padding-top: 10px; margin-top: 6px; width: 100%; }
+    
+    .checkout-action-btn { width: 100%; background: linear-gradient(135deg, var(--accent), #059669); color: white; border: none; padding: 13px; border-radius: 10px; font-weight: bold; font-size: 0.9rem; cursor: pointer; margin-top: 10px; transition: all 0.2s; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35); }
+    .checkout-action-btn:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5); }
+    
+    @media (max-width: 768px) {
+      .header-inner { padding: 0 16px; }
+      .main-container { padding: 16px 12px; }
+      .menu-grid { grid-template-columns: 1fr; }
+      .cart-modal-content { padding: 18px; max-height: 92vh; }
+    }
+  </style>
+</head>
+<body data-controller="checkout">
+  <!-- TOAST NOTIFICATION & GUIDANCE BANNER -->
+  <div id="cart-toast" class="toast-notif">
+    <div style="background: #10b981; color: white; border-radius: 9999px; padding: 4px;">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+    </div>
+    <div>
+      <p style="margin: 0; font-size: 0.85rem; font-weight: 600;">Added to your container!</p>
+      <p id="toast-item-name" style="margin: 0; font-size: 0.75rem; color: #94a3b8;">Item successfully added.</p>
+    </div>
+  </div>
+  
+  <div id="error-banner" class="guidance-banner">
+    <svg style="width: 24px; height: 24px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    <div>
+      <p style="margin: 0; font-size: 0.65rem; font-weight: bold; text-transform: uppercase; color: #78350f;">Smart Combination Rule</p>
+      <p id="error-message-text" style="margin: 2px 0 0 0; font-size: 0.8rem;">Let's pair your items nicely for a wonderful meal!</p>
+    </div>
+  </div>
+  <!-- MAIN CASHIER APP INTERFACE -->
+  <div id="main-app">
+    <header>
+      <div class="header-inner">
+        <div class="brand-container">
+          <span class="logo-top">Cashier Add Items</span>
+          <span class="logo-bottom">Newsong Cookitz House</span>
+        </div>
+        <div class="header-actions">
+          <span id="active-mode-badge" class="mode-indicator">Dine-In</span>
+          <!-- Configurable Form Link Button -->
+          <a id="external-form-link-btn" href="#" target="_blank" class="header-tray-btn" style="text-decoration: none; display: none;" title="Open External Form">
+            <span style="font-size: 0.75rem; font-weight: bold;">Form Link</span>
+          </a>
+          <button class="header-tray-btn" onclick="openCheckoutModal()" title="View Order Tray">
+            <svg class="cart-icon-svg" viewBox="0 0 24 24">
+              <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.60 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/>
+            </svg>
+            <span style="font-size: 0.75rem; font-weight: bold;">Tray</span>
+            <span id="header-cart-count" class="cart-counter-badge">0</span>
+          </button>
+          <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode"></button>
+        </div>
+      </div>
+    </header>
+    <div class="main-container">
+      <div class="banner">
+        <h2>Add Items to Active Order</h2>
+        <p>Select additional items, packages, or drinks to append to the selected order.</p>
+      </div>
+      <!-- Automatic Container Builder Section -->
+      <div id="container-builder-section">
+        <div class="container-header-row">
+          <h3 id="active-container-title">Container #1 (Standard Container - ₦500)</h3>
+          <button class="add-container-btn" onclick="finalizeContainer()">Save Container & Start New</button>
+        </div>
+        <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0 0 6px 0;">Container adapts automatically based on your item selection with smart combination rules. Click save when done with this container.</p>
+        <div id="containers-list" class="containers-list">
+          <div class="container-card-box">
+            <div class="container-card-top">
+              <span id="container-type-label" style="font-weight: bold; color: var(--brand-bottom);">Type: Standard Container (₦500)</span>
+            </div>
+            <div id="container-items-preview" class="container-items-preview">
+              <strong>Contents:</strong> Empty container. Select items below.
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Real-Time Menu Search Bar -->
+      <div class="search-bar-container">
+        <input type="text" id="menu-search-input" class="form-input" placeholder="🔍 Search menu items (e.g., Jollof, Amala, Drinks)..." oninput="filterMenuSearch()">
+      </div>
+      <!-- Category Filter Buttons -->
+      <div class="categories" id="category-filter-bar">
+        <button class="cat-btn active" data-category="all">All Items</button>
+        <button class="cat-btn" data-category="Special Packages">Special Packages</button>
+        <button class="cat-btn" data-category="Rice & Grains">Rice & Grains</button>
+        <button class="cat-btn" data-category="Solids (Swallow)">Solids (Swallow)</button>
+        <button class="cat-btn" data-category="Stew & Soup">Stew & Soup</button>
+        <button class="cat-btn" data-category="Yam">Yam</button>
+        <button class="cat-btn" data-category="Beans">Beans</button>
+        <button class="cat-btn" data-category="Extras & Proteins">Extras & Proteins</button>
+        <button class="cat-btn" data-category="Drinks">Drinks</button>
+      </div>
+      <div class="menu-grid" id="menu-items-grid">
+        <!-- Dynamically rendered menu items -->
+      </div>
+    </div>
+  </div>
+  <!-- CHECKOUT POP-UP MODAL (EDIT MODE) -->
+  <div id="cart-modal">
+    <div class="cart-modal-content">
+      <div class="cart-modal-header">
+        <h3 id="modal-header-title">Order Tray & Update</h3>
+        <button class="close-modal-btn" onclick="closeCheckoutModal()" title="Close">&times;</button>
+      </div>
+      <div id="cart-empty-msg" style="text-align: center; padding: 25px 0; color: var(--text-muted); font-size: 0.85rem;">
+        Your tray is currently empty. Add items from the menu to proceed.
+      </div>
+      <div id="cart-active-content" style="display: none; width: 100%; flex-direction: column; flex: 1; overflow: hidden;">
+        <div id="cart-items-list" class="cart-items-list"></div>
+        <div class="cart-form-scrollable" id="cart-form-scrollable-section" style="display: none;">
+          <!-- Hidden in edit mode to maintain clean transaction sync -->
+        </div>
+        <div class="cart-summary-box">
+          <div class="summary-row">
+            <span>Containers & Food Subtotal</span>
+            <span id="modal-subtotal" style="font-weight: bold;">₦0</span>
+          </div>
+          <div id="summary-fee-row" class="summary-row" style="display: none;">
+            <span>Delivery Fee</span>
+            <span id="modal-delivery-fee" style="font-weight: bold;">₦0</span>
+          </div>
+          <div class="summary-total">
+            <span>Total</span>
+            <span id="modal-grand-total">₦0</span>
+          </div>
+          <button id="modal-checkout-btn" class="checkout-action-btn" onclick="submitOrder()">Update Order & Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- E-RECEIPT MODAL -->
+  <div id="receipt-modal" style="position: fixed; inset: 0; width: 100vw; height: 100vh; background: rgba(11, 15, 25, 0.85); backdrop-filter: blur(4px); z-index: 250; display: none; align-items: center; justify-content: center; padding: 16px; box-sizing: border-box;">
+    <div class="cart-modal-content" style="max-width: 450px;">
+      <div class="cart-modal-header">
+        <h3>Updated Official E-Receipt</h3>
+        <button class="close-modal-btn" onclick="closeReceiptModal()" title="Close">&times;</button>
+      </div>
+      <div id="receipt-body" style="font-size: 0.8rem; line-height: 1.5; max-height: 55vh; overflow-y: auto; text-align: left; padding: 10px 0;"></div>
+      <div style="display: flex; gap: 8px; margin-top: 10px;">
+        <button class="checkout-action-btn" onclick="printReceipt()" style="background: #3b82f6; flex: 1; margin-top: 0;">🖨️ Print Receipt</button>
+        <button class="checkout-action-btn" onclick="closeReceiptModal()" style="flex: 1; margin-top: 0;">Done / Return to Edit</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    const EXTERNAL_FORM_LINK = "";
+    let currentServiceMode = 'Dine-In';
+    let currentContainer = { packaging: 'Standard Container', packagingPrice: 500, items: {} };
+    let submittedContainers = [];
+    let pendingOrderData = null;
+    let editingOrderId = null;
+    
+    // Comprehensive Menu Data Catalog
+    const menuItems = [
+      { id: 1, name: "Student Budget Pack", category: "Special Packages", price: 1500, desc: "1 Scoop Party Jollof, 1 Fried Beef, 1 Boiled Egg, and 1 Free Pure Water." },
+      { id: 2, name: "The Bachelor's Comfort Pack", category: "Special Packages", price: 2200, desc: "1 Scoop Rice & Beans mix, 2 Fried Fish pieces, Fried Plantain, and Free Pure Water." },
+      { id: 3, name: "Oga At The Top Executive Combo", category: "Special Packages", price: 4500, desc: "Basmati Jollof, Fried Turkey lap, Moi-Moi, Cole-slaw, and Chilled Maltina." },
+      { id: 4, name: "Queen's Choice Swallow Pack", category: "Special Packages", price: 3200, desc: "2 Wraps of Pounded Yam, Egusi Soup with Shaki & Pomo, Beef chunk, and Bottled Water." },
+      { id: 5, name: "Amala Special Deluxe", category: "Special Packages", price: 2800, desc: "3 Wraps of Amala, Ewedu & Gbegiri soup mix, 2 Fried Beef chunks, and Pomo." },
+      { id: 6, name: "Ofada Heritage Feast", category: "Special Packages", price: 3500, desc: "Full portion of Ofada Rice with Ayamase designer sauce, Titus fish, and Boiled Egg." },
+      { id: 7, name: "Family Sunday Special", category: "Special Packages", price: 8500, desc: "Large party tray of Jollof & Fried rice mix, 4 Big Chicken pieces, and Dodo." },
+      { id: 8, name: "Quick Fix Yam & Egg Combo", category: "Special Packages", price: 2000, desc: "Fried Yam Slices (6 pcs), 2 Fried Eggs, pepper sauce, and Soda drink." },
+      { id: 9, name: "Healthy Fitness Pack", category: "Special Packages", price: 2800, desc: "Unripe Plantain Porridge, Croaker fish piece, and bottled table water." },
+      { id: 10, name: "The Midnight Munchies Pack", category: "Special Packages", price: 1800, desc: "Hot Ewa Agoyin beans, fried plantain, 2 pieces of Akara, and chilled Pepsi." },
+      
+      { id: 11, name: "Party Jollof Rice (Per Scoop)", category: "Rice & Grains", price: 400, desc: "Smoky firewood-style party jollof rice cooked with rich local spices." },
+      { id: 12, name: "Fried Rice (Per Scoop)", category: "Rice & Grains", price: 450, desc: "Richly loaded fried rice with mixed vegetables and seasoning." },
+      { id: 13, name: "Ofada Rice (Per Scoop)", category: "Rice & Grains", price: 500, desc: "Unpolished native local rice served hot." },
+      { id: 14, name: "Coconut Rice (Per Scoop)", category: "Rice & Grains", price: 450, desc: "Sweet aroma coconut rice cooked in fresh coconut milk stock." },
+      { id: 15, name: "Native Jollof Rice (Per Scoop)", category: "Rice & Grains", price: 400, desc: "Traditional palm oil jollof rice loaded with locust beans and crayfish." },
+      { id: 16, name: "Special Mixed Rice & Beans (Per Scoop)", category: "Rice & Grains", price: 450, desc: "Combined portion of rice and honey beans." },
+      { id: 17, name: "Turmeric Spiced Rice (Per Scoop)", category: "Rice & Grains", price: 450, desc: "Fragrant yellow rice seasoned with aromatic herbs." },
+      { id: 18, name: "Basmati Party Jollof (Per Scoop)", category: "Rice & Grains", price: 600, desc: "Premium long-grain basmati rice cooked party style." },
+      { id: 19, name: "Basmati Fried Rice (Per Scoop)", category: "Rice & Grains", price: 650, desc: "Premium basmati fried rice with mixed veggies and liver." },
+      { id: 20, name: "Plain White Rice (Per Scoop)", category: "Rice & Grains", price: 300, desc: "Steam-cooked long grain white rice." },
+      
+      { id: 21, name: "Honey Beans / Oloyin (Per Scoop)", category: "Beans", price: 400, desc: "Savory cooked brown beans with fish extract and palm oil." },
+      { id: 22, name: "Ewa Agoyin (Plain Beans, Per Scoop)", category: "Beans", price: 450, desc: "Well-mashed soft honey beans ready for sweet Agoyin sauce." },
+      { id: 23, name: "Brown Beans Porridge (Per Scoop)", category: "Beans", price: 400, desc: "Rich beans porridge cooked with onions and crayfish." },
+      { id: 24, name: "Stewed Beans & Corn (Adalu, Per Scoop)", category: "Beans", price: 500, desc: "Traditional sweet corn and beans medley." },
+      { id: 25, name: "Beans and Plantain Pottage (Per Scoop)", category: "Beans", price: 550, desc: "Hearty combination of beans and ripe plantain chunks." },
+      { id: 26, name: "Mashed Beans Special (Per Scoop)", category: "Beans", price: 450, desc: "Smooth seasoned bean puree." },
+      
+      { id: 27, name: "Amala (Per Wrap)", category: "Solids (Swallow)", price: 300, desc: "Smooth, dark-brown yam flour swallow." },
+      { id: 28, name: "Pounded Yam (Per Wrap)", category: "Solids (Swallow)", price: 500, desc: "Classic pounded yam made from fresh tubers." },
+      { id: 29, name: "Yellow Garri / Eba (Per Wrap)", category: "Solids (Swallow)", price: 300, desc: "Golden yellow garri swallow prepared with boiling water." },
+      { id: 30, name: "White Garri / Eba (Per Wrap)", category: "Solids (Swallow)", price: 300, desc: "White garri swallow." },
+      { id: 31, name: "Semovita / Semo (Per Wrap)", category: "Solids (Swallow)", price: 400, desc: "Smooth wheat-based swallow option." },
+      { id: 32, name: "Wheat Meal (Per Wrap)", category: "Solids (Swallow)", price: 400, desc: "Nutritious brown wheat swallow." },
+      { id: 33, name: "Fufu / Akpu (Per Wrap)", category: "Solids (Swallow)", price: 300, desc: "Traditional fermented cassava swallow." },
+      { id: 34, name: "Oat Meal Swallow (Per Wrap)", category: "Solids (Swallow)", price: 500, desc: "Healthy fiber-rich oat swallow." },
+      { id: 35, name: "Cassava Starch / Usi (Per Wrap)", category: "Solids (Swallow)", price: 600, desc: "Traditional yellowish oil-cured starch swallow." },
+      { id: 36, name: "Plantain Flour Swallow (Elubo Ogede, Per Wrap)", category: "Solids (Swallow)", price: 450, desc: "Special dietary green plantain swallow." },
+      
+      { id: 37, name: "Egusi Soup (Per Scoop)", category: "Stew & Soup", price: 600, desc: "Rich melon seed soup cooked with stockfish and palm oil." },
+      { id: 38, name: "Ewedu Soup (Per Scoop)", category: "Stew & Soup", price: 300, desc: "Freshly blended green slimy ewedu leaves." },
+      { id: 39, name: "Gbegiri Soup (Per Scoop)", category: "Stew & Soup", price: 300, desc: "Smooth mashed brown beans soup." },
+      { id: 40, name: "Ewedu & Gbegiri Combined (Per Scoop)", category: "Stew & Soup", price: 500, desc: "The classic Lagos-style combo soup base." },
+      { id: 41, name: "Ayamase / Designer Stew (Per Scoop)", category: "Stew & Soup", price: 700, desc: "Hot bleached palm oil green pepper sauce with locust beans." },
+      { id: 42, name: "Buka Red Tomato Stew (Per Scoop)", category: "Stew & Soup", price: 500, desc: "Classic local peppery tomato stew base." },
+      { id: 43, name: "Efo Riro Vegetable Soup (Per Scoop)", category: "Stew & Soup", price: 650, desc: "Deeply nutritious spinach soup loaded with locust beans and crayfish." },
+      { id: 44, name: "Ogbono Soup (Per Scoop)", category: "Stew & Soup", price: 600, desc: "Draw seed soup cooked with savory stock." },
+      { id: 45, name: "Oha Soup (Per Scoop)", category: "Stew & Soup", price: 700, desc: "Traditional Eastern aromatic oha leaf soup." },
+      { id: 46, name: "Fisherman Seafood Soup (Per Scoop)", category: "Stew & Soup", price: 1000, desc: "Rich coastal fish and seafood infused soup." },
+      
+      { id: 47, name: "Native Yam Porridge / Asaro (Per Scoop)", category: "Yam", price: 600, desc: "Soft tuber yam cooked down in rich pepper mix and palm oil." },
+      { id: 48, name: "Fried Yam Slices (3 Pieces)", category: "Yam", price: 400, desc: "Crispy golden fried yam chunks." },
+      { id: 49, name: "Boiled Tuber Yam (Per Slice)", category: "Yam", price: 300, desc: "Soft boiled white yam slice." },
+      { id: 50, name: "Sweet Potato Porridge (Per Scoop)", category: "Yam", price: 500, desc: "Savory orange sweet potato pottage." },
+      { id: 51, name: "Boiled Sweet Potato (Per Slice)", category: "Yam", price: 300, desc: "Tender boiled sweet potato." },
+      { id: 52, name: "Unripe Plantain Porridge (Per Scoop)", category: "Yam", price: 600, desc: "Healthy iron-rich unripe plantain pottage." },
+      { id: 53, name: "Ripe Plantain Porridge (Per Scoop)", category: "Yam", price: 550, desc: "Sweet ripe plantain pottage." },
+      { id: 54, name: "Yam and Plantain Mixed Porridge (Per Scoop)", category: "Yam", price: 650, desc: "Combined yam and plantain pottage." },
+      { id: 55, name: "Roasted Yam Slice (Per Piece)", category: "Yam", price: 300, desc: "Coal-roasted local yam slice." },
+      { id: 56, name: "Cocoyam Porridge / Esuru (Per Scoop)", category: "Yam", price: 500, desc: "Traditional savory cocoyam pottage." },
+      
+      { id: 57, name: "Fried Beef (Per Piece)", category: "Extras & Proteins", price: 500, desc: "Tender seasoned beef chunk, well fried." },
+      { id: 58, name: "Fried Chicken (Per Piece - Lap/Breast)", category: "Extras & Proteins", price: 1500, desc: "Big golden-fried chicken piece." },
+      { id: 59, name: "Fried Turkey (Per Piece)", category: "Extras & Proteins", price: 2000, desc: "Juicy seasoned turkey piece." },
+      { id: 60, name: "Titus Fish (Fried, Per Piece)", category: "Extras & Proteins", price: 1000, desc: "Whole juicy fried Titus fish portion." },
+      { id: 61, name: "Croaker Fish (Fried, Per Piece)", category: "Extras & Proteins", price: 1800, desc: "Premium croaker fish piece." },
+      { id: 62, name: "Stockfish / Panla (Per Piece)", category: "Extras & Proteins", price: 800, desc: "Flavorful seasoned stockfish piece." },
+      { id: 63, name: "Cow Skin / Pomo (Big Size, Per Piece)", category: "Extras & Proteins", price: 300, desc: "Soft cooked cow skin." },
+      { id: 64, name: "Cow Tripe / Shaki (Per Scoop)", category: "Extras & Proteins", price: 600, desc: "Tender diced cow tripe." },
+      { id: 65, name: "Cow Foot (Per Piece)", category: "Extras & Proteins", price: 1000, desc: "Soft gelatinous cow foot piece." },
+      { id: 66, name: "Fried Plantain / Dodo (5 Slices)", category: "Extras & Proteins", price: 400, desc: "Sweet ripe plantain slices fried golden." },
+      { id: 67, name: "Boiled Egg (Per Piece)", category: "Extras & Proteins", price: 300, desc: "Hard-boiled fresh egg." },
+      { id: 68, name: "Moi-Moi (Per Wrap)", category: "Extras & Proteins", price: 500, desc: "Steamed blended bean pudding." },
+      { id: 69, name: "Akara (Bean Cake, 3 Pieces)", category: "Extras & Proteins", price: 300, desc: "Freshly fried hot bean fritters." },
+      { id: 70, name: "Asun (Spiced Diced Goat Meat, Per Scoop)", category: "Extras & Proteins", price: 1200, desc: "Peppered smoky chopped goat meat." },
+      { id: 71, name: "Peppered Snail (Per Piece)", category: "Extras & Proteins", price: 1500, desc: "Juicy giant snail in spicy pepper sauce." },
+      
+      { id: 72, name: "Pure Water Sachet", category: "Drinks", price: 0, desc: "Clean, chilled sachet water. Absolutely free for all customers!" },
+      { id: 73, name: "Bottled Table Water (75cl)", category: "Drinks", price: 300, desc: "Chilled bottled table water." },
+      { id: 74, name: "Chilled Pepsi (50cl Pet Bottle)", category: "Drinks", price: 400, desc: "Cold 50cl bottle soda." },
+      { id: 75, name: "Chilled Coca-Cola (50cl Pet Bottle)", category: "Drinks", price: 400, desc: "Cold 50cl bottle soda." },
+      { id: 76, name: "Chilled Sprite (50cl Pet Bottle)", category: "Drinks", price: 400, desc: "Cold 50cl bottle soda." },
+      { id: 77, name: "Fanta (50cl Pet Bottle)", category: "Drinks", price: 400, desc: "Cold 50cl bottle soda." },
+      { id: 78, name: "Maltina Can (330ml)", category: "Drinks", price: 600, desc: "Chilled nourishing malt beverage." },
+      { id: 79, name: "Amstel Malta Can (330ml)", category: "Drinks", price: 600, desc: "Chilled premium malt drink." },
+      { id: 80, name: "Fayrouz Pear Drink (Can)", category: "Drinks", price: 600, desc: "Sparkling non-alcoholic pear drink." },
+      { id: 81, name: "Bigi Cola (50cl Pet Bottle)", category: "Drinks", price: 300, desc: "Chilled Bigi cola soda." },
+      { id: 82, name: "Bigi Apple / Tropical (50cl)", category: "Drinks", price: 300, desc: "Chilled fruit flavored soda." },
+      { id: 83, name: "Fearless Energy Drink (Can)", category: "Drinks", price: 700, desc: "Revitalizing energy drink." },
+      { id: 84, name: "Hollandia Yoghurt (500ml)", category: "Drinks", price: 1200, desc: "Rich creamy fruit yoghurt." },
+      { id: 85, name: "Chivita 100% Juice Pack", category: "Drinks", price: 1000, desc: "Fresh fruit juice pack." },
+      { id: 86, name: "Chapman Cocktail (Plastic Cup)", category: "Drinks", price: 800, desc: "Refreshing local signature cocktail drink." }
+    ];
+    
+    function renderMenu() {
+      const grid = document.getElementById('menu-items-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+      menuItems.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'menu-card';
+        card.dataset.category = item.category;
+        card.dataset.id = item.id;
+        card.dataset.name = item.name;
+        card.dataset.price = item.price;
+        const formattedPrice = `₦${item.price.toLocaleString()}`;
+        card.innerHTML = `
+          <div>
+            <div class="menu-header">
+              <h3 class="menu-title">${item.name}</h3>
+              <span class="menu-cat">${item.category}</span>
+            </div>
+            <p class="menu-desc">${item.desc}</p>
+          </div>
+          <div class="menu-footer">
+            <span class="price">${formattedPrice}</span>
+            <div class="stepper">
+              <button class="step-btn decrease">-</button>
+              <span class="step-count">0</span>
+              <button class="step-btn increase">+</button>
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+      attachStepperEvents();
+    }
+    
+    function filterMenuSearch() {
+      const searchInput = document.getElementById('menu-search-input');
+      if (!searchInput) return;
+      const query = searchInput.value.toLowerCase().trim();
+      const activeCatBtn = document.querySelector('.cat-btn.active');
+      const selectedCat = activeCatBtn ? activeCatBtn.dataset.category : 'all';
+      
+      document.querySelectorAll('.menu-card').forEach(card => {
+        const name = card.dataset.name.toLowerCase();
+        const descElement = card.querySelector('.menu-desc');
+        const desc = descElement ? descElement.textContent.toLowerCase() : '';
+        const cat = card.dataset.category;
+        
+        const matchesSearch = name.includes(query) || desc.includes(query);
+        const matchesCategory = (selectedCat === 'all' || cat === selectedCat);
+        
+        if (matchesSearch && matchesCategory) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+    
+    function toggleTheme() {
+      const isLight = document.body.classList.toggle('light-mode');
+      updateThemeButtons(isLight);
+    }
+    
+    function updateThemeButtons(isLight) {
+      const sunSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
+      const moonSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
+      
+      document.querySelectorAll('.theme-toggle-btn').forEach(btn => {
+        btn.innerHTML = isLight ? sunSvg : moonSvg;
+        btn.title = isLight ? "Switch to Dark Mode" : "Switch to Light Mode";
+      });
+    }
+    
+    function initializeServiceMode(mode) {
+      currentServiceMode = mode;
+      const activeModeBadge = document.getElementById('active-mode-badge');
+      const containerBuilder = document.getElementById('container-builder-section');
+      if (activeModeBadge) activeModeBadge.textContent = currentServiceMode;
+      
+      const needsContainers = (currentServiceMode === 'Online Takeaway' || currentServiceMode === 'Physical Takeaway' || currentServiceMode === 'Home Delivery');
+      if (containerBuilder) containerBuilder.style.display = needsContainers ? 'block' : 'none';
+      
+      if (needsContainers) {
+        updateActiveContainerUI();
+      }
+    }
+    
+    function updateActiveContainerUI() {
+      const typeLabel = document.getElementById('container-type-label');
+      const titleLabel = document.getElementById('active-container-title');
+      const preview = document.getElementById('container-items-preview');
+      if (!typeLabel || !titleLabel || !preview) return;
+      
+      let priceText = `₦${currentContainer.packagingPrice.toLocaleString()}`;
+      typeLabel.textContent = `Type: ${currentContainer.packaging} (${priceText})`;
+      titleLabel.textContent = `Container #${submittedContainers.length + 1} (${currentContainer.packaging} - ${priceText})`;
+      
+      const itemEntries = Object.values(currentContainer.items);
+      if (itemEntries.length === 0) {
+        preview.innerHTML = `<strong>Contents:</strong> Empty container. Select items below.`;
+      } else {
+        preview.innerHTML = `<strong>Contents:</strong> ${itemEntries.map(i => `${i.name} (x${i.qty})`).join(', ')}`;
+      }
+    }
+    
+    function finalizeContainer() {
+      if (Object.keys(currentContainer.items).length === 0) {
+        showFriendlyNotice('This container is empty! Please add at least one item before saving.');
+        return;
+      }
+      submittedContainers.push(JSON.parse(JSON.stringify(currentContainer)));
+      currentContainer = { packaging: 'Standard Container', packagingPrice: 500, items: {} };
+      updateActiveContainerUI();
+      updateGlobalCartState();
+      showToast('Container saved successfully!');
+    }
+    
+    function openCheckoutModal() {
+      const modal = document.getElementById('cart-modal');
+      if (modal) modal.style.display = 'flex';
+      renderCartModal();
+    }
+    
+    function closeCheckoutModal() {
+      const modal = document.getElementById('cart-modal');
+      if (modal) modal.style.display = 'none';
+    }
+    
+    document.querySelectorAll('.cat-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        filterMenuSearch();
+      });
+    });
+    
+    function showToast(itemName) {
+      const toast = document.getElementById('cart-toast');
+      const itemNameEl = document.getElementById('toast-item-name');
+      if (!toast || !itemNameEl) return;
+      itemNameEl.innerText = itemName + ' added successfully.';
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+    
+    function showFriendlyNotice(message) {
+      const banner = document.getElementById('error-banner');
+      const msgText = document.getElementById('error-message-text');
+      if (!banner || !msgText) return;
+      msgText.innerText = message;
+      banner.classList.add('show');
+      setTimeout(() => {
+        banner.classList.remove('show');
+      }, 5000);
+    }
+    
+    function attachStepperEvents() {
+      document.querySelectorAll('.menu-card').forEach(card => {
+        const id = card.dataset.id;
+        const name = card.dataset.name;
+        const price = parseFloat(card.dataset.price);
+        const category = card.dataset.category;
+        
+        const countSpan = card.querySelector('.step-count');
+        const incBtn = card.querySelector('.increase');
+        const decBtn = card.querySelector('.decrease');
+        if (!incBtn || !decBtn || !countSpan) return;
+        const newInc = incBtn.cloneNode(true);
+        const newDec = decBtn.cloneNode(true);
+        incBtn.parentNode.replaceChild(newInc, incBtn);
+        decBtn.parentNode.replaceChild(newDec, decBtn);
+        
+        newInc.addEventListener('click', () => {
+          const needsContainers = (currentServiceMode === 'Online Takeaway' || currentServiceMode === 'Physical Takeaway' || currentServiceMode === 'Home Delivery');
+          
+          if (needsContainers) {
+            const isEmptyContainer = Object.keys(currentContainer.items).length === 0;
+            if (isEmptyContainer) {
+              if (category === 'Special Packages') {
+                currentContainer.packaging = 'Special Package';
+                currentContainer.packagingPrice = 0;
+              } else if (category === 'Solids (Swallow)') {
+                currentContainer.packaging = 'Double Container';
+                currentContainer.packagingPrice = 1000;
+              } else {
+                currentContainer.packaging = 'Standard Container';
+                currentContainer.packagingPrice = 500;
+              }
+            }
+            if (!currentContainer.items[id]) {
+              currentContainer.items[id] = { name, price, qty: 0 };
+            }
+            currentContainer.items[id].qty++;
+            countSpan.textContent = currentContainer.items[id].qty;
+            updateActiveContainerUI();
+            showToast(name);
+          } else {
+            if (!window.dineInCart) window.dineInCart = {};
+            if (!window.dineInCart[id]) window.dineInCart[id] = { name, price, qty: 0 };
+            window.dineInCart[id].qty++;
+            countSpan.textContent = window.dineInCart[id].qty;
+            updateGlobalCartState();
+            showToast(name);
+          }
+        });
+        
+        newDec.addEventListener('click', () => {
+          const needsContainers = (currentServiceMode === 'Online Takeaway' || currentServiceMode === 'Physical Takeaway' || currentServiceMode === 'Home Delivery');
+          if (needsContainers) {
+            if (currentContainer.items[id] && currentContainer.items[id].qty > 0) {
+              currentContainer.items[id].qty--;
+              if (currentContainer.items[id].qty === 0) {
+                delete currentContainer.items[id];
+                countSpan.textContent = '0';
+              } else {
+                countSpan.textContent = currentContainer.items[id].qty;
+              }
+              updateActiveContainerUI();
+            }
+          } else {
+            if (window.dineInCart && window.dineInCart[id] && window.dineInCart[id].qty > 0) {
+              window.dineInCart[id].qty--;
+              if (window.dineInCart[id].qty === 0) {
+                delete window.dineInCart[id];
+                countSpan.textContent = '0';
+              } else {
+                countSpan.textContent = window.dineInCart[id].qty;
+              }
+              updateGlobalCartState();
+            }
+          }
+        });
+      });
+    }
+    
+    function updateGlobalCartState() {
+      const needsContainers = (currentServiceMode === 'Online Takeaway' || currentServiceMode === 'Physical Takeaway' || currentServiceMode === 'Home Delivery');
+      let count = 0;
+      if (needsContainers) {
+        count = submittedContainers.length + (Object.keys(currentContainer.items).length > 0 ? 1 : 0);
+      } else {
+        if (window.dineInCart) {
+          Object.values(window.dineInCart).forEach(i => count += i.qty);
+        }
+      }
+      const badge = document.getElementById('header-cart-count');
+      if (badge) badge.textContent = count;
+    }
+    
+    function calculateTotalSum() {
+      let subtotal = 0;
+      const needsContainers = (currentServiceMode === 'Online Takeaway' || currentServiceMode === 'Physical Takeaway' || currentServiceMode === 'Home Delivery');
+      if (needsContainers) {
+        let allContainersToCheck = [...submittedContainers];
+        if (Object.keys(currentContainer.items).length > 0) {
+          allContainersToCheck.push(currentContainer);
+        }
+        allContainersToCheck.forEach(c => {
+          const itemsSum = Object.values(c.items).reduce((sum, i) => sum + (i.price * i.qty), 0);
+          subtotal += itemsSum + c.packagingPrice;
+        });
+      } else {
+        if (window.dineInCart) {
+          Object.values(window.dineInCart).forEach(item => {
+            subtotal += item.price * item.qty;
+          });
+        }
+      }
+      return subtotal;
+    }
+    
+    function updateGrandTotal() {
+      let subtotal = calculateTotalSum();
+      const subtotalEl = document.getElementById('modal-subtotal');
+      const grandTotalEl = document.getElementById('modal-grand-total');
+      if (subtotalEl) subtotalEl.textContent = '₦' + subtotal.toLocaleString();
+      if (grandTotalEl) grandTotalEl.textContent = '₦' + subtotal.toLocaleString();
+    }
+    
+    function renderCartModal() {
+      const listContainer = document.getElementById('cart-items-list');
+      const emptyMsg = document.getElementById('cart-empty-msg');
+      const activeContent = document.getElementById('cart-active-content');
+      const modalHeaderTitle = document.getElementById('modal-header-title');
+      if (!listContainer || !emptyMsg || !activeContent) return;
+      
+      if (editingOrderId) {
+        if (modalHeaderTitle) modalHeaderTitle.textContent = `Edit Order #${editingOrderId} & Add Items`;
+      }
+      
+      listContainer.innerHTML = '';
+      
+      const needsContainers = (currentServiceMode === 'Online Takeaway' || currentServiceMode === 'Physical Takeaway' || currentServiceMode === 'Home Delivery');
+      let allContainersToCheck = [...submittedContainers];
+      if (needsContainers && Object.keys(currentContainer.items).length > 0) {
+        allContainersToCheck.push(currentContainer);
+      }
+      
+      let hasItems = false;
+      if (needsContainers) {
+        hasItems = allContainersToCheck.length > 0;
+        if (hasItems) {
+          allContainersToCheck.forEach((c, index) => {
+            const itemStrs = Object.values(c.items).map(i => `${i.name} (x${i.qty})`).join(', ');
+            const containerTotal = Object.values(c.items).reduce((sum, i) => sum + (i.price * i.qty), 0) + c.packagingPrice;
+            
+            const row = document.createElement('div');
+            row.className = 'cart-container-row';
+            row.innerHTML = `
+              <div style="font-weight: bold; color: var(--brand-bottom);">Container #${index + 1} (${c.packaging})</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">${itemStrs}</div>
+              <div style="display: flex; justify-content: space-between; margin-top: 4px; font-weight: 600;">
+                <span>Container Subtotal + Pack</span>
+                <span>₦${containerTotal.toLocaleString()}</span>
+              </div>
+            `;
+            listContainer.appendChild(row);
+          });
+        }
+      } else {
+        hasItems = window.dineInCart && Object.keys(window.dineInCart).length > 0;
+        if (hasItems) {
+          Object.values(window.dineInCart).forEach(item => {
+            const row = document.createElement('div');
+            row.className = 'cart-container-row';
+            row.innerHTML = `
+              <div style="display: flex; justify-content: space-between;">
+                <span>${item.name} (x${item.qty})</span>
+                <span style="font-weight: bold; color: var(--brand-bottom);">₦${(item.price * item.qty).toLocaleString()}</span>
+              </div>
+            `;
+            listContainer.appendChild(row);
+          });
+        }
+      }
+      if (!hasItems) {
+        emptyMsg.style.display = 'block';
+        activeContent.style.display = 'none';
+        return;
+      }
+      emptyMsg.style.display = 'none';
+      activeContent.style.display = 'flex';
+      
+      updateGrandTotal();
+    }
+    
+    function submitOrder() {
+      const needsContainers = (currentServiceMode === 'Online Takeaway' || currentServiceMode === 'Physical Takeaway' || currentServiceMode === 'Home Delivery');
+      if (needsContainers && Object.keys(currentContainer.items).length > 0) {
+        submittedContainers.push(JSON.parse(JSON.stringify(currentContainer)));
+        currentContainer = { packaging: 'Standard Container', packagingPrice: 500, items: {} };
+      }
+      
+      const subtotalEl = document.getElementById('modal-subtotal');
+      const grandTotalEl = document.getElementById('modal-grand-total');
+      const grandTotal = grandTotalEl ? grandTotalEl.textContent : '₦0';
+      const subtotalVal = subtotalEl ? subtotalEl.textContent : '₦0';
+      const orderId = editingOrderId ? editingOrderId : ('NSC-' + Math.floor(100000 + Math.random() * 900000));
+      
+      pendingOrderData = {
+        order: {
+          order_id: orderId,
+          customer_name: 'Existing Customer (Order #' + orderId + ')',
+          phone: '00000000000',
+          service_mode: currentServiceMode,
+          fulfillment_type: currentServiceMode,
+          payment_method: 'Existing Order Append',
+          subtotal: subtotalVal,
+          grand_total: grandTotal,
+          containers: submittedContainers,
+          dine_in_items: window.dineInCart || {}
+        }
+      };
+      
+      submittedContainers = [];
+      window.dineInCart = {};
+      currentContainer = { packaging: 'Standard Container', packagingPrice: 500, items: {} };
+      
+      document.querySelectorAll('.step-count').forEach(span => { span.textContent = '0'; });
+      if (needsContainers) updateActiveContainerUI();
+      updateGlobalCartState();
+      closeCheckoutModal();
+      
+      const receiptBody = document.getElementById('receipt-body');
+      if (receiptBody) {
+        receiptBody.innerHTML = generateReceiptHTML(pendingOrderData.order);
+      }
+      
+      const receiptModal = document.getElementById('receipt-modal');
+      if (receiptModal) receiptModal.style.display = 'flex';
+      
+      sendOrderToBackend(pendingOrderData);
+    }
+    
+    function generateReceiptHTML(order) {
+      let itemsHTML = '';
+      if (order.service_mode === 'Online Takeaway' || order.service_mode === 'Physical Takeaway' || order.service_mode === 'Home Delivery') {
+        order.containers.forEach((c, idx) => {
+          const itemsList = Object.values(c.items).map(i => `${i.name} (x${i.qty}) - ₦${(i.price * i.qty).toLocaleString()}`).join('<br>');
+          const cTotal = Object.values(c.items).reduce((sum, i) => sum + (i.price * i.qty), 0) + c.packagingPrice;
+          itemsHTML += `<div style="margin-bottom: 8px; border-bottom: 1px dashed var(--border-color); padding-bottom: 6px;">
+            <strong>Container #${idx + 1} (${c.packaging})</strong><br>
+            ${itemsList}<br>
+            <span style="color: var(--brand-bottom);">Container Total: ₦${cTotal.toLocaleString()}</span>
+          </div>`;
+        });
+      } else {
+        Object.values(order.dine_in_items).forEach(item => {
+          itemsHTML += `<div>${item.name} x${item.qty} - ₦${(item.price * item.qty).toLocaleString()}</div>`;
+        });
+      }
+      
+      return `
+        <div style="text-align: center; border-bottom: 2px dashed var(--border-color); padding-bottom: 12px; margin-bottom: 12px;">
+          <h2 style="margin: 0; color: var(--brand-bottom); font-size: 1.1rem;">Newsong Cookitz House</h2>
+          <p style="margin: 2px 0; font-size: 0.75rem; color: var(--text-muted);">Additional Items Receipt (Order #${order.order_id})</p>
+          <p style="margin: 2px 0; font-size: 0.75rem;">Date: ${new Date().toLocaleString()}</p>
+        </div>
+        <div style="border-top: 1px dashed var(--border-color); border-bottom: 1px dashed var(--border-color); padding: 8px 0; margin-bottom: 10px;">
+          <div style="font-weight: bold; margin-bottom: 4px; font-size: 0.75rem; text-transform: uppercase;">Added Items Breakdown</div>
+          ${itemsHTML}
+        </div>
+        <div style="font-size: 0.8rem;">
+          <div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 0.9rem; color: var(--brand-bottom); border-top: 1px solid var(--border-color); padding-top: 6px; margin-top: 4px;">
+            <span>Additional Grand Total:</span> <span>${order.grand_total}</span>
+          </div>
+        </div>
+      `;
+    }
+    
+    function printReceipt() {
+      const receiptBody = document.getElementById('receipt-body');
+      if (!receiptBody) return;
+      const receiptContent = receiptBody.innerHTML;
+      const printWindow = window.open('', '_blank', 'width=600,height=600');
+      if (printWindow) {
+        printWindow.document.write(`
+          <html>
+            <head><title>Print E-Receipt - Newsong Cookitz House</title></head>
+            <body style="font-family: monospace; padding: 20px; color: #000; background: #fff;">
+              ${receiptContent}
+              <script>window.print(); window.close();<\/script>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+      }
+    }
+    
+    function sendOrderToBackend(orderData) {
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+      const endpoint = editingOrderId ? `/cashier/orders/${editingOrderId}/append_item` : '/orders';
+      const method = 'POST';
+      
+      fetch(endpoint, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {})
+        },
+        body: JSON.stringify(orderData)
+      })
+      .then(res => res.json())
+      .then(data => {
+        console.log('Order successfully updated in database:', data);
+      })
+      .catch(err => {
+        console.error('Error syncing order update:', err);
+      });
+    }
+    
+    function closeReceiptModal() {
+      const receiptModal = document.getElementById('receipt-modal');
+      if (receiptModal) receiptModal.style.display = 'none';
+      if (editingOrderId) {
+        window.location.href = `/cashier/orders/${editingOrderId}/edit`;
+      } else {
+        window.location.href = '/cashier';
+      }
+    }
+    
+    window.onload = () => {
+      renderMenu();
+      updateThemeButtons(document.body.classList.contains('light-mode'));
+      
+      if (EXTERNAL_FORM_LINK && EXTERNAL_FORM_LINK.trim() !== "") {
+        const formLinkBtn = document.getElementById('external-form-link-btn');
+        if (formLinkBtn) {
+          formLinkBtn.href = EXTERNAL_FORM_LINK;
+          formLinkBtn.style.display = 'inline-flex';
+        }
+      }
+      
+      const pathSegments = window.location.pathname.split('/');
+      const ordersIndex = pathSegments.indexOf('orders');
+      if (ordersIndex !== -1 && pathSegments[ordersIndex + 1]) {
+        editingOrderId = pathSegments[ordersIndex + 1];
+      } else {
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderIdParam = urlParams.get('order_id');
+        if (orderIdParam) {
+          editingOrderId = orderIdParam;
+        }
+      }
+      
+      const fulfillmentParam = new URLSearchParams(window.location.search).get('fulfillment');
+      if (fulfillmentParam) {
+        initializeServiceMode(fulfillmentParam);
+      } else {
+        initializeServiceMode('Dine-In');
+      }
+    };
+  </script>
+</body>
+</html>

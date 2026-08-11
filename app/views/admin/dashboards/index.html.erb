@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Newsong Cookitz House - Admin Control Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --bg-main: #0b0f19;
+      --bg-card: #151c2c;
+      --border-color: #26334d;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent: #10b981;
+      --accent-hover: #059669;
+      --brand-top: #94a3b8;
+      --brand-bottom: #34d399;
+    }
+    body.light-mode {
+      --bg-main: #f8fafc;
+      --bg-card: #ffffff;
+      --border-color: #e2e8f0;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --accent: #059669;
+      --accent-hover: #047857;
+      --brand-top: #64748b;
+      --brand-bottom: #059669;
+    }
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 0; padding: 0; min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center;
+      transition: background-color 0.3s ease, color 0.3s ease;
+      box-sizing: border-box;
+    }
+    *, *:before, *:after { box-sizing: inherit; }
+    
+    .theme-toggle-btn {
+      background: var(--bg-main); border: 1px solid var(--border-color);
+      color: var(--text-main); border-radius: 6px; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 30px; height: 30px; padding: 0; flex-shrink: 0;
+      transition: all 0.2s ease;
+    }
+    .theme-toggle-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .theme-toggle-btn svg { width: 14px; height: 14px; stroke: currentColor; }
+    
+    header {
+      position: sticky; top: 0; z-index: 90;
+      background: var(--bg-card); border-bottom: 1px solid var(--border-color);
+      padding: 14px 0; backdrop-filter: blur(8px); width: 100%; display: flex; justify-content: center;
+    }
+    .header-inner { max-width: 1100px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; width: 100%; }
+    
+    .brand-container { display: flex; flex-direction: column; text-align: left; }
+    .logo-top { font-size: 0.65rem; font-weight: 700; color: var(--brand-top); text-transform: uppercase; letter-spacing: 1.5px; }
+    .logo-bottom { font-size: 1.05rem; font-weight: 800; color: var(--brand-bottom); letter-spacing: 0.5px; margin-top: 2px; }
+    
+    .main-container { max-width: 1100px; margin: 0 auto; padding: 24px 16px; width: 100%; flex: 1; display: flex; flex-direction: column; gap: 20px; box-sizing: border-box; }
+    
+    .banner { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px 24px; text-align: left; }
+    .banner h2 { margin: 0 0 6px 0; color: var(--brand-bottom); font-size: 1.2rem; }
+    .banner p { margin: 0; color: var(--text-muted); font-size: 0.85rem; line-height: 1.4; }
+    
+    /* STATS GRID */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; width: 100%; }
+    .stat-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; text-align: left; }
+    .stat-title { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; }
+    .stat-value { font-size: 1.4rem; font-weight: 800; color: var(--brand-bottom); margin-top: 6px; }
+    
+    /* ACCOUNTING LEDGER BREAKDOWN SECTION */
+    .ledger-section {
+      background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; text-align: left;
+    }
+    .ledger-title { font-size: 0.95rem; font-weight: bold; color: var(--text-main); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .ledger-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+    .ledger-sub-card { background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px; }
+    .ledger-sub-title { font-size: 0.8rem; color: var(--brand-bottom); font-weight: 700; text-transform: uppercase; margin-bottom: 6px; }
+    .ledger-sub-val { font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-bottom: 8px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; }
+    .ledger-list { list-style: none; padding: 0; margin: 0; font-size: 0.82rem; color: var(--text-muted); }
+    .ledger-list li { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px dashed var(--border-color); }
+    
+    /* ADMIN MANAGEMENT MODULES GRID */
+    .modules-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; width: 100%; }
+    .module-card {
+      background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px;
+      padding: 20px; display: flex; flex-direction: column; justify-content: space-between; text-align: left;
+      transition: border-color 0.2s ease, transform 0.2s ease;
+    }
+    .module-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .module-title { font-size: 1rem; font-weight: bold; color: var(--text-main); margin: 0 0 8px 0; }
+    .module-desc { font-size: 0.8rem; color: var(--text-muted); margin: 0 0 16px 0; line-height: 1.4; }
+    
+    .module-btn {
+      background: linear-gradient(135deg, var(--accent), #059669);
+      color: white; border: none; padding: 10px 14px; border-radius: 8px;
+      font-size: 0.8rem; font-weight: bold; text-decoration: none; text-align: center;
+      display: inline-block; transition: opacity 0.2s; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+    }
+    .module-btn:hover { opacity: 0.9; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="brand-container">
+        <span class="logo-top">Admin Manager Control Panel</span>
+        <span class="logo-bottom">Newsong Cookitz House</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Manager Logged In</span>
+        <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode"></button>
+      </div>
+    </div>
+  </header>
+  
+  <div class="main-container">
+    <div class="banner">
+      <h2>Welcome Back, Manager</h2>
+      <p>Here is your daily operational overview. Monitor cash collections, adjust menu item availability, override pending orders, and manage your team from one place.</p>
+    </div>
+    
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-title">Cash Collected</div>
+        <div class="stat-value">₦<%= number_with_delimiter(number_with_precision(@total_cash || 0, precision: 2)) %></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">POS Payments</div>
+        <div class="stat-value">₦<%= number_with_delimiter(number_with_precision(@total_pos || 0, precision: 2)) %></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Paystack Link</div>
+        <div class="stat-value">₦<%= number_with_delimiter(number_with_precision(@total_paystack || 0, precision: 2)) %></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Total Revenue</div>
+        <div class="stat-value">₦<%= number_with_delimiter(number_with_precision(@total_revenue || 0, precision: 2)) %></div>
+      </div>
+    </div>
+
+    <!-- Advanced Channel & Payment Breakdown Section -->
+    <div class="ledger-section">
+      <div class="ledger-title">Channel Revenue & Payment Channel Disaggregation</div>
+      <div class="ledger-grid">
+        
+        <% @channel_metrics.each do |slug, data| %>
+          <div class="ledger-sub-card">
+            <div class="ledger-sub-title"><%= data[:name] %> (<%= data[:count] %> Orders)</div>
+            <div class="ledger-sub-val">₦<%= number_with_delimiter(number_with_precision(data[:revenue], precision: 2)) %></div>
+            <ul class="ledger-list">
+              <% if data.key?(:paystack) %>
+                <li><span>Paystack Link:</span> <span>₦<%= number_with_delimiter(number_with_precision(data[:paystack], precision: 2)) %></span></li>
+              <% else %>
+                <li><span>Cash:</span> <span>₦<%= number_with_delimiter(number_with_precision(data[:cash], precision: 2)) %></span></li>
+                <li><span>POS / Card:</span> <span>₦<%= number_with_delimiter(number_with_precision(data[:pos], precision: 2)) %></span></li>
+                <li><span>Transfer:</span> <span>₦<%= number_with_delimiter(number_with_precision(data[:transfer], precision: 2)) %></span></li>
+                <li><span>Split Payment:</span> <span>₦<%= number_with_delimiter(number_with_precision(data[:split], precision: 2)) %></span></li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+
+      </div>
+
+      <div style="margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+        <div class="ledger-sub-card">
+          <div class="ledger-sub-title">Ancillary Packaging Breakdown</div>
+          <div class="ledger-sub-val" style="margin-bottom: 4px;">Total: ₦<%= number_with_delimiter(number_with_precision(@total_packaging_revenue || 0, precision: 2)) %></div>
+          <ul class="ledger-list">
+            <% if @container_breakdown.present? %>
+              <% @container_breakdown.each do |type, price| %>
+                <li><span><%= type.to_s.titleize %> Container</span> <span>₦<%= number_with_delimiter(number_with_precision(price, precision: 2)) %></span></li>
+              <% end %>
+            <% else %>
+              <li><span>No packaging logged</span> <span>₦0.00</span></li>
+            <% end %>
+          </ul>
+        </div>
+
+        <div class="ledger-sub-card">
+          <div class="ledger-sub-title">Logistics & Core Revenue Summary</div>
+          <ul class="ledger-list" style="margin-top: 4px;">
+            <li><span>Delivery Fees Collected:</span> <span>₦<%= number_with_delimiter(number_with_precision(@total_delivery_fees || 0, precision: 2)) %></span></li>
+            <li><span>Core Food Turnover:</span> <span>₦<%= number_with_delimiter(number_with_precision(@core_food_revenue || 0, precision: 2)) %></span></li>
+            <li><span>Total Fulfilled Orders:</span> <span><%= @completed_orders_count || 0 %> Orders</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modules-grid">
+      <div class="module-card">
+        <div>
+          <h3 class="module-title">Menu & Pricing Control</h3>
+          <p class="module-desc">Add new food items, update retail prices instantly, or toggle items as "out of stock" when supplies run low without changing code.</p>
+        </div>
+        <%= link_to "Manage Menu Items", admin_menu_items_path, class: "module-btn" %>
+      </div>
+      
+      <div class="module-card">
+        <div>
+          <h3 class="module-title">Sales Reconciliation</h3>
+          <p class="module-desc">Access comprehensive reports tracking total cash collected by cashiers, shift summaries, and daily revenue reconciliation.</p>
+        </div>
+        <%= link_to "View Sales Reports", admin_reports_path, class: "module-btn" %>
+      </div>
+      
+      <div class="module-card">
+        <div>
+          <h3 class="module-title">Order Overrides</h3>
+          <p class="module-desc">Review active queue entries, cancel erroneous orders, handle customer disputes, or approve refunds and bill adjustments.</p>
+        </div>
+        <%= link_to "Manage Orders", admin_orders_path, class: "module-btn" %>
+      </div>
+      
+      <div class="module-card">
+        <div>
+          <h3 class="module-title">Staff Management</h3>
+          <p class="module-desc">Create accounts, review activity, and configure access statuses for cashiers, kitchen crew, floor staff, and dispatch riders.</p>
+        </div>
+        <%= link_to "Manage Staff Accounts", admin_users_path, class: "module-btn" %>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    function toggleTheme() {
+      const isLight = document.body.classList.toggle('light-mode');
+      updateThemeButton(isLight);
+    }
+    
+    function updateThemeButton(isLight) {
+      const sunSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
+      const moonSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
+      
+      document.querySelectorAll('.theme-toggle-btn').forEach(btn => {
+        btn.innerHTML = isLight ? sunSvg : moonSvg;
+        btn.title = isLight ? "Switch to Dark Mode" : "Switch to Light Mode";
+      });
+    }
+    window.onload = () => {
+      updateThemeButton(document.body.classList.contains('light-mode'));
+    };
+  </script>
+</body>
+</html>

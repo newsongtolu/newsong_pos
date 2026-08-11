@@ -1,0 +1,117 @@
+<div class="max-w-4xl mx-auto px-4 py-8 space-y-6">
+  
+  <!-- Navigation / Action Bar (Hidden when printing) -->
+  <div class="flex justify-between items-center bg-[#1e293b] p-4 rounded-2xl border border-slate-700 print:hidden">
+    <a href="<%= cashier_orders_path %>" class="text-xs font-bold text-slate-300 hover:text-white bg-slate-800 px-4 py-2 rounded-xl border border-slate-700 transition">
+      &larr; Back to Cashier Orders
+    </a>
+    <div class="flex gap-3">
+      <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-xl shadow transition cursor-pointer">
+        🖨️ Print Thermal Receipt
+      </button>
+      <% if @order.customer_email.present? %>
+        <%= button_to "📧 Email Receipt", email_receipt_cashier_order_path(@order), method: :post, class: "bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-xl shadow transition cursor-pointer" %>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- THE RECEIPT CONTAINER (Optimized for Screen & Thermal Print) -->
+  <div id="thermal-receipt" class="bg-white text-slate-900 p-6 sm:p-8 rounded-2xl shadow-2xl max-w-md mx-auto font-mono text-xs border border-slate-300 print:shadow-none print:border-none print:w-full print:max-w-none print:p-0">
+    
+    <!-- Receipt Header -->
+    <div class="text-center space-y-1 pb-4 border-b border-dashed border-slate-400">
+      <h1 class="text-base font-black uppercase tracking-wider">NEWSONG RESTAURANT POS</h1>
+      <p class="text-[10px] text-slate-600">Official Updated Sales Receipt</p>
+      <p class="text-[10px] text-slate-600">Date: <%= @order.created_at.strftime("%d/%m/%Y %I:%M %p") %></p>
+      <% if @order.updated_at != @order.created_at %>
+        <p class="text-[10px] text-amber-600 font-bold uppercase">** Amended / Updated Order **</p>
+      <% end %>
+    </div>
+
+    <!-- Order & Customer Meta -->
+    <div class="py-3 border-b border-dashed border-slate-400 space-y-1">
+      <div class="flex justify-between">
+        <span>Order ID:</span>
+        <span class="font-bold">#<%= @order.id %></span>
+      </div>
+      <div class="flex justify-between">
+        <span>Customer:</span>
+        <span class="font-bold"><%= @order.customer_name.presence || 'Walk-In' %></span>
+      </div>
+      <div class="flex justify-between">
+        <span>Service Mode:</span>
+        <span class="font-bold uppercase"><%= @order.service_mode&.titleize %></span>
+      </div>
+    </div>
+
+    <!-- Itemized Breakdown -->
+    <div class="py-3 border-b border-dashed border-slate-400 space-y-2">
+      <p class="font-bold text-[10px] uppercase text-slate-500">Itemized Breakdown:</p>
+      <% @order.order_items.each_with_index do |item, index| %>
+        <div class="flex justify-between items-start">
+          <div>
+            <span class="font-bold"><%= item.quantity %>x <%= item.name || item.menu_item&.name %></span>
+            <% if item.respond_to?(:notes) && item.notes.present? %>
+              <p class="text-[9px] text-slate-500 italic">Note: <%= item.notes %></p>
+            <% end %>
+          </div>
+          <span class="font-bold">₦<%= number_with_precision(item.price.to_f * item.quantity, precision: 2) %></span>
+        </div>
+      <% end %>
+    </div>
+
+    <!-- Payment History & Split Details -->
+    <div class="py-3 border-b border-dashed border-slate-400 space-y-1.5">
+      <p class="font-bold text-[10px] uppercase text-slate-500">Payment Audit Trail:</p>
+      
+      <!-- Initial Payment -->
+      <div class="flex justify-between text-[11px]">
+        <span>Initial Payment (<%= @order.payment_method&.titleize || 'Cash' %>):</span>
+        <span class="font-bold">₦<%= number_with_precision(@order.total_price.to_f, precision: 2) %></span>
+      </div>
+
+      <!-- If there are subsequent additions/payments recorded -->
+      <% if @order.respond_to?(:additional_payments) && @order.additional_payments.present? %>
+        <% @order.additional_payments.each do |pay| %>
+          <div class="flex justify-between text-[11px] text-blue-700">
+            <span>Added Payment (<%= pay['method'] %>):</span>
+            <span class="font-bold">+₦<%= number_with_precision(pay['amount'], precision: 2) %></span>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+
+    <!-- Grand Total -->
+    <div class="py-4 flex justify-between items-center text-sm font-black border-b border-slate-900">
+      <span>TOTAL PAID:</span>
+      <span>₦<%= number_with_precision(@order.total_price.to_f, precision: 2) %></span>
+    </div>
+
+    <!-- Receipt Footer -->
+    <div class="text-center pt-4 space-y-1 text-[10px] text-slate-500">
+      <p>Thank you for your patronage!</p>
+      <p>Software powered by Newsong POS</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- Thermal Printer Media Styling -->
+<style>
+  @media print {
+    body {
+      background: white !important;
+      color: black !important;
+    }
+    .print\:hidden {
+      display: none !important;
+    }
+    #thermal-receipt {
+      width: 80mm !important; /* Standard thermal printer paper width */
+      margin: 0 auto !important;
+      padding: 0 !important;
+      box-shadow: none !important;
+      border: none !important;
+    }
+  }
+</style>

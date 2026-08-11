@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sales Reports - Admin Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --bg-main: #0b0f19; --bg-card: #151c2c; --border-color: #26334d;
+      --text-main: #f1f5f9; --text-muted: #94a3b8; --accent: #10b981;
+    }
+    body { background-color: var(--bg-main); color: var(--text-main); font-family: system-ui, sans-serif; margin: 0; padding: 20px; }
+    .container { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+    .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; }
+    .btn { background: var(--accent); color: white; border: none; padding: 8px 14px; border-radius: 6px; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-block; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Top Navigation / Title -->
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <h1 style="margin: 0; font-size: 1.4rem; color: #34d399;">📊 Sales & Financial Reports</h1>
+        <p style="margin: 4px 0 0 0; color: var(--text-muted); font-size: 0.85rem;">Review revenue milestones and cash tracking breakdowns.</p>
+      </div>
+      <%= link_to "← Back to Dashboard", admin_dashboards_path, class: "btn", style: "background: #374151;" %>
+    </div>
+
+    <!-- Metrics Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px;">
+      <div class="card">
+        <p style="margin: 0; color: var(--text-muted); font-size: 0.8rem;">Gross Revenue</p>
+        <h2 style="margin: 8px 0 0 0; font-size: 1.8rem; color: #34d399;">₦<%= number_with_delimiter(@total_revenue) %></h2>
+      </div>
+      <div class="card">
+        <p style="margin: 0; color: var(--text-muted); font-size: 0.8rem;">Completed Orders</p>
+        <h2 style="margin: 8px 0 0 0; font-size: 1.8rem; color: #60a5fa;"><%= @total_orders %></h2>
+      </div>
+      <div class="card">
+        <p style="margin: 0; color: var(--text-muted); font-size: 0.8rem;">Physical Cash Collections</p>
+        <h2 style="margin: 8px 0 0 0; font-size: 1.8rem; color: #facc15;">₦<%= number_with_delimiter(@cash_collections) %></h2>
+      </div>
+    </div>
+
+    <!-- Summary Note Card -->
+    <div class="card">
+      <h3 style="margin-top: 0; font-size: 1rem; color: #f1f5f9;">Reconciliation Note</h3>
+      <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem; line-height: 1.5;">
+        All transactions processed through the cashier and terminal systems are aggregated automatically in real-time. Use this data for end-of-day shift balancing and auditing.
+      </p>
+    </div>
+  </div>
+</body>
+</html>

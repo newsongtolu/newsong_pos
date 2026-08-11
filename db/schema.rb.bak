@@ -1,0 +1,91 @@
+# This file is auto-generated from the current state of the database. Instead
+# of editing this file, please use the migrations feature of Active Record to
+# incrementally modify your database, and then regenerate this schema definition.
+#
+# This file is the source Rails uses to define your schema when running `bin/rails
+# db:schema:load`. When creating a new database, `bin/rails db:schema:load` tends to
+# be faster and is potentially less error prone than running all of your
+# migrations from scratch. Old migrations may fail to apply correctly if those
+# migrations use external dependencies or application code.
+#
+# It's strongly recommended that you check this file into your version control system.
+
+ActiveRecord::Schema[8.1].define(version: 2026_08_06_134155) do
+  create_table "menu_items", force: :cascade do |t|
+    t.boolean "available"
+    t.string "category"
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "name"
+    t.decimal "price"
+    t.boolean "requires_double_container"
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "order_items", force: :cascade do |t|
+    t.integer "container_type"
+    t.datetime "created_at", null: false
+    t.integer "menu_item_id", null: false
+    t.integer "order_id", null: false
+    t.integer "quantity"
+    t.decimal "subtotal"
+    t.decimal "unit_price"
+    t.datetime "updated_at", null: false
+    t.index ["menu_item_id"], name: "index_order_items_on_menu_item_id"
+    t.index ["order_id"], name: "index_order_items_on_order_id"
+  end
+
+  create_table "orders", force: :cascade do |t|
+    t.datetime "cancellation_expires_at"
+    t.datetime "created_at", null: false
+    t.string "customer_email"
+    t.string "customer_name"
+    t.string "customer_phone"
+    t.integer "delivery_distance"
+    t.integer "payment_status"
+    t.integer "service_mode"
+    t.integer "status"
+    t.string "table_number"
+    t.decimal "total_amount"
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "payment_transactions", force: :cascade do |t|
+    t.decimal "amount"
+    t.datetime "created_at", null: false
+    t.string "gateway"
+    t.text "metadata"
+    t.integer "order_id", null: false
+    t.string "reference"
+    t.string "status"
+    t.datetime "updated_at", null: false
+    t.index ["order_id"], name: "index_payment_transactions_on_order_id"
+  end
+
+  create_table "products", force: :cascade do |t|
+    t.string "category"
+    t.datetime "created_at", null: false
+    t.string "name"
+    t.decimal "price"
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "users", force: :cascade do |t|
+    t.boolean "active"
+    t.datetime "created_at", null: false
+    t.string "email"
+    t.string "encrypted_password"
+    t.string "name"
+    t.string "password_digest"
+    t.string "phone"
+    t.datetime "remember_created_at"
+    t.datetime "reset_password_sent_at"
+    t.string "reset_password_token"
+    t.integer "role"
+    t.datetime "updated_at", null: false
+  end
+
+  add_foreign_key "order_items", "menu_items"
+  add_foreign_key "order_items", "orders"
+  add_foreign_key "payment_transactions", "orders"
+end

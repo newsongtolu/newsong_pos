@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Orders Queue - Admin Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --bg-main: #0b0f19; --bg-card: #151c2c; --border-color: #26334d;
+      --text-main: #f1f5f9; --text-muted: #94a3b8; --accent: #10b981;
+    }
+    body { background-color: var(--bg-main); color: var(--text-main); font-family: system-ui, sans-serif; margin: 0; padding: 20px; }
+    .container { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+    .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; }
+    .btn { background: var(--accent); color: white; border: none; padding: 8px 14px; border-radius: 6px; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-block; font-size: 0.9rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; text-align: left; }
+    th, td { padding: 12px; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; }
+    th { color: var(--text-muted); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Top Navigation / Title -->
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <h1 style="margin: 0; font-size: 1.4rem; color: #60a5fa;">📦 Orders Queue & Overrides</h1>
+        <p style="margin: 4px 0 0 0; color: var(--text-muted); font-size: 0.85rem;">Monitor customer orders across the station pipeline and manage overrides.</p>
+      </div>
+      <%= link_to "← Back to Dashboard", admin_dashboards_path, class: "btn", style: "background: #374151;" %>
+    </div>
+
+    <!-- Orders Management Table Card -->
+    <div class="card">
+      <h3 style="margin-top: 0; font-size: 1rem;">Active Order Stream</h3>
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Customer / Details</th>
+              <th>Total Amount</th>
+              <th>Status</th>
+              <th>Payment</th>
+              <th style="text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if @orders.any? %>
+              <% @orders.each do |order| %>
+                <tr>
+                  <td style="font-weight: 500;">#<%= order.id %></td>
+                  <td style="color: var(--text-muted);">
+                    <%= order.respond_to?(:customer_name) && order.customer_name.present? ? order.customer_name : "Walk-in Customer" %>
+                  </td>
+                  <td>₦<%= number_with_delimiter(order.total_amount) rescue '0' %></td>
+                  <td>
+                    <span style="padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; background: #1e293b; color: #38bdf8;">
+                      <%= order.status.titleize rescue 'Pending' %>
+                    </span>
+                  </td>
+                  <td>
+                    <span style="font-size: 0.85rem; color: var(--text-muted);">
+                      <%= order.respond_to?(:payment_status) && order.payment_status.present? ? order.payment_status.titleize : 'Paid' %>
+                    </span>
+                  </td>
+                  <td style="text-align: right; display: flex; gap: 8px; justify-content: flex-end;">
+                    <%= button_to "Cancel / Override", admin_order_path(order), method: :delete, data: { confirm: "Are you sure you want to cancel this order?" }, class: "btn", style: "background: #dc2626; padding: 6px 10px; font-size: 0.75rem;" %>
+                  </td>
+                </tr>
+              <% end %>
+            <% else %>
+              <tr>
+                <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">No orders in the queue right now.</td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

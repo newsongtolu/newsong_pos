@@ -1,0 +1,2 @@
+module Dispatch::OrdersHelper
+end

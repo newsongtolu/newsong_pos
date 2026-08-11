@@ -1,0 +1,13 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  app_name: MyString
+  whatsapp_number: MyString
+  paystack_link: MyString
+  maintenance_mode: false
+
+two:
+  app_name: MyString
+  whatsapp_number: MyString
+  paystack_link: MyString
+  maintenance_mode: false

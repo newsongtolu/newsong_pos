@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Menu & Pricing Control - Newsong Cookitz House</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --bg-main: #0b0f19; --bg-card: #151c2c; --border-color: #26334d;
+      --text-main: #f1f5f9; --text-muted: #94a3b8; --accent: #10b981;
+    }
+    body { background-color: var(--bg-main); color: var(--text-main); font-family: system-ui, sans-serif; margin: 0; padding: 20px; }
+    .container { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+    .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; }
+    input, select, textarea { background: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-main); padding: 10px; border-radius: 8px; width: 100%; }
+    .btn { background: var(--accent); color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-block; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <h1 style="margin: 0; font-size: 1.4rem; color: #34d399;">📋 Menu & Pricing Control</h1>
+        <p style="margin: 4px 0 0 0; color: var(--text-muted); font-size: 0.85rem;">Add food items, update prices, or toggle availability instantly[cite: 2].</p>
+      </div>
+      <%= link_to "← Back to Dashboard", admin_dashboards_path, class: "btn", style: "background: #334155;" %>
+    </div>
+
+    <!-- Add New Menu Item Form -->
+    <div class="card">
+      <h3 style="margin-top: 0; font-size: 1rem;">Add New Menu Item</h3>
+      <%= form_with model: [:admin, @menu_item], local: true do |f| %>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 12px;">
+          <div>
+            <label style="font-size: 0.8rem; color: var(--text-muted);">Item Name</label>
+            <%= f.text_field :name, placeholder: "e.g. Jollof Rice & Chicken", required: true %>
+          </div>
+          <div>
+            <label style="font-size: 0.8rem; color: var(--text-muted);">Price (₦)</label>
+            <%= f.number_field :price, placeholder: "2500", required: true %>
+          </div>
+          <div>
+            <label style="font-size: 0.8rem; color: var(--text-muted);">Category</label>
+            <%= f.select :category, options_for_select(['Rice', 'Swallow', 'Proteins', 'Drinks', 'Special Packages']), {}, required: true %>
+          </div>
+        </div>
+        <div style="margin-bottom: 12px;">
+          <label style="font-size: 0.8rem; color: var(--text-muted);">Description</label>
+          <%= f.text_area :description, placeholder: "Brief description of ingredients...", rows: 2 %>
+        </div>
+        <%= f.submit "Add Item to Menu", class: "btn" %>
+      <% end %>
+    </div>
+
+    <!-- Existing Menu Items List -->
+    <div class="card">
+      <h3 style="margin-top: 0; font-size: 1rem;">Current Menu Catalog</h3>
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-muted);">
+              <th style="padding: 10px;">Name</th>
+              <th style="padding: 10px;">Category</th>
+              <th style="padding: 10px;">Price</th>
+              <th style="padding: 10px;">Status</th>
+              <th style="padding: 10px; text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @menu_items.each do |item| %>
+              <tr style="border-bottom: 1px solid var(--border-color);">
+                <td style="padding: 12px; font-weight: bold;"><%= item.name %></td>
+                <td style="padding: 12px; color: var(--text-muted);"><%= item.category %></td>
+                <td style="padding: 12px;">₦<%= number_with_delimiter(item.price) %></td>
+                <td style="padding: 12px;">
+                  <span style="padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; background: <%= item.in_stock ? 'rgba(16,185,129,0.2); color: #34d399;' : 'rgba(239,68,68,0.2); color: #ef4444;' %>">
+                    <%= item.in_stock ? 'In Stock' : 'Out of Stock' %>
+                  </span>
+                </td>
+                <td style="padding: 12px; text-align: right;">
+                  <%= button_to (item.in_stock ? 'Mark Out of Stock' : 'Mark In Stock'), toggle_stock_admin_menu_item_path(item), method: :patch, class: "btn", style: "font-size: 0.75rem; padding: 6px 10px; background: #{item.in_stock ? '#b91c1c' : '#059669'};" %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

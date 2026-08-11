@@ -1,0 +1,163 @@
+<div class="max-w-2xl mx-auto px-4 sm:px-6 py-8 space-y-6" data-controller="checkout">
+  <!-- TOP TERMINAL HEADER -->
+  <div class="text-center space-y-1.5">
+    <span class="inline-block text-[10px] font-extrabold text-amber-400 uppercase tracking-widest bg-amber-500/10 px-3.5 py-1 rounded-full border border-amber-500/20">
+      Cashier Order Amendment Terminal
+    </span>
+    <h2 class="text-2xl font-black text-white tracking-tight">Edit Order #<%= @order.id %></h2>
+    <p class="text-xs text-slate-400">Review customer details, modify item quantities, or add new items to this order.</p>
+  </div>
+  
+  <%= form_with model: @order, html: { data: { fulfillment_type: @order.fulfillment_type, service_mode: @order.service_mode } } do |f| %>
+    <!-- CUSTOMER INFO CARD (Read-Only) -->
+    <div class="bg-[#1e293b] p-5 rounded-2xl border border-slate-700/80 shadow-xl grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Customer Name</label>
+        <%= f.text_field :customer_name, readonly: true, class: "w-full bg-[#0f172a] border border-slate-700 rounded-xl px-3 py-2 text-white text-sm font-semibold cursor-not-allowed focus:outline-none" %>
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Phone Number</label>
+        <%= f.text_field :phone, readonly: true, class: "w-full bg-[#0f172a] border border-slate-700 rounded-xl px-3 py-2 text-amber-400 text-sm font-semibold cursor-not-allowed focus:outline-none" %>
+      </div>
+    </div>
+
+    <!-- EXISTING ORDER SECTION -->
+    <div class="bg-[#1e293b] p-6 rounded-2xl border border-slate-700/80 shadow-xl space-y-5">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-700/60">
+        <span class="bg-blue-900/50 text-blue-400 text-xs px-2.5 py-1 rounded-md font-semibold border border-blue-800">Existing Order</span>
+        <span class="text-xs text-slate-400">Original Payment: <strong class="text-white"><%= @order.payment_method.present? ? @order.payment_method.titleize : 'Cash' %></strong></span>
+      </div>
+      <div class="space-y-3">
+        <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Current Items in Order</span>
+        
+        <div class="divide-y divide-slate-700/60 bg-[#0f172a] rounded-xl border border-slate-700 overflow-hidden">
+          <%= f.fields_for :order_items, @order.order_items.where(is_appended: [false, nil]) do |item_form| %>
+            <div class="p-3.5 flex items-center justify-between gap-4">
+              <div class="flex-1">
+                <span class="block text-sm font-bold text-white"><%= item_form.object.name || item_form.object.menu_item&.name || "Menu Item" %></span>
+                <span class="text-xs text-emerald-400 font-semibold">₦<%= number_with_delimiter(item_form.object.price || item_form.object.menu_item&.price || 0) %> each</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-[10px] text-slate-400 uppercase font-bold">Qty:</span>
+                  <%= item_form.number_field :quantity, class: "w-16 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-white text-xs font-bold text-center focus:outline-none" %>
+                </div>
+                <div class="flex items-center gap-1.5 text-rose-400 text-xs font-semibold">
+                  <label class="cursor-pointer flex items-center gap-1 hover:text-rose-300">
+                    <%= item_form.check_box :_destroy, class: "rounded bg-slate-900 border-slate-700 text-rose-600 focus:ring-0" %>
+                    Remove
+                  </label>
+                </div>
+              </div>
+            </div>
+          <% end %>
+          <% if @order.order_items.where(is_appended: [false, nil]).empty? %>
+            <div class="p-6 text-center text-xs text-slate-500 font-medium">No items currently listed in this order container.</div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- NEW ORDER / APPENDED ITEMS SECTION -->
+    <div class="bg-[#1e293b] p-6 rounded-2xl border border-slate-700/80 shadow-xl space-y-5">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-700/60">
+        <span class="bg-emerald-900/50 text-emerald-400 text-xs px-2.5 py-1 rounded-md font-semibold border border-emerald-800">New Order / Appended Items</span>
+        <%= link_to "+ Add New Items", add_items_cashier_order_path(@order), class: "bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-3 py-1.5 rounded-lg" %>
+      </div>
+      <div class="space-y-3">
+        <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">New Added Additions</span>
+        
+        <div class="divide-y divide-slate-700/60 bg-[#0f172a] rounded-xl border border-slate-700 overflow-hidden">
+          <%= f.fields_for :order_items, @order.order_items.where(is_appended: true) do |item_form| %>
+            <div class="p-3.5 flex items-center justify-between gap-4">
+              <div class="flex-1">
+                <span class="block text-sm font-bold text-white"><%= item_form.object.name || item_form.object.menu_item&.name || "Menu Item" %></span>
+                <span class="text-xs text-emerald-400 font-semibold">₦<%= number_with_delimiter(item_form.object.price || item_form.object.menu_item&.price || 0) %> each</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-[10px] text-slate-400 uppercase font-bold">Qty:</span>
+                  <%= item_form.number_field :quantity, class: "w-16 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-white text-xs font-bold text-center focus:outline-none" %>
+                </div>
+                <div class="flex items-center gap-1.5 text-rose-400 text-xs font-semibold">
+                  <label class="cursor-pointer flex items-center gap-1 hover:text-rose-300">
+                    <%= item_form.check_box :_destroy, class: "rounded bg-slate-900 border-slate-700 text-rose-600 focus:ring-0" %>
+                    Remove
+                  </label>
+                </div>
+              </div>
+            </div>
+          <% end %>
+          <% if @order.order_items.where(is_appended: true).empty? %>
+            <div class="p-6 text-center text-xs text-slate-500 font-medium">Click "+ Add New Items" above to add new items to this order context.</div>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Payment Method Dropdown -->
+      <div class="space-y-2 pt-2">
+        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Payment Method</label>
+        <%= f.select :payment_method, options_for_select([['Cash', 'cash'], ['Bank Transfer', 'transfer'], ['POS', 'pos'], ['Split Payment', 'split']], @order.payment_method), { prompt: 'Select Payment Method' }, { id: "payment-method-select", class: "w-full bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-white font-medium focus:outline-none focus:border-amber-500 text-sm" } %>
+      </div>
+
+      <!-- Split Payment Dynamic Section -->
+      <div id="split-payment-section" class="hidden space-y-4 p-4 bg-[#0f172a] rounded-xl border border-slate-700">
+        <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wider">New Split Payment Breakdown</h4>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[10px] text-slate-400 uppercase font-semibold mb-1">Method 1</label>
+            <%= select_tag "order[split_method_1]", options_for_select([['Cash', 'cash'], ['Bank Transfer', 'transfer'], ['POS', 'pos']], params.dig(:order, :split_method_1)), prompt: 'Select Method', class: "w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs" %>
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-400 uppercase font-semibold mb-1">Amount 1 (₦)</label>
+            <%= number_field_tag "order[split_amount_1]", params.dig(:order, :split_amount_1), placeholder: "0.00", class: "w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-bold" %>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[10px] text-slate-400 uppercase font-semibold mb-1">Method 2</label>
+            <%= select_tag "order[split_method_2]", options_for_select([['Cash', 'cash'], ['Bank Transfer', 'transfer'], ['POS', 'pos']], params.dig(:order, :split_method_2)), prompt: 'Select Method', class: "w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs" %>
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-400 uppercase font-semibold mb-1">Amount 2 (₦)</label>
+            <%= number_field_tag "order[split_amount_2]", params.dig(:order, :split_amount_2), placeholder: "0.00", class: "w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-bold" %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GRAND TOTAL SECTION (LAST ON THE LIST) -->
+    <div class="bg-[#1e293b] p-5 rounded-2xl border border-slate-700/80 shadow-xl space-y-2">
+      <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Grand Total (Existing Cost + New Cost) (₦)</label>
+      <%= f.number_field :grand_total, readonly: true, class: "w-full bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-emerald-400 font-extrabold text-lg cursor-not-allowed focus:outline-none" %>
+    </div>
+
+    <!-- ACTION BUTTONS (SIDE-BY-SIDE BACK & UPDATE) -->
+    <div class="grid grid-cols-2 gap-4 pt-2">
+      <%= link_to "Back", cashier_orders_path, class: "w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3.5 px-6 rounded-xl transition text-center border border-slate-700 text-sm flex items-center justify-center shadow-lg" %>
+      <%= f.submit "Update Order Successfully", class: "w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 px-6 rounded-xl transition cursor-pointer text-center shadow-lg text-sm" %>
+    </div>
+  <% end %>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const paymentSelect = document.getElementById("payment-method-select");
+    const splitSection = document.getElementById("split-payment-section");
+    
+    function toggleSplit() {
+      if (!paymentSelect || !splitSection) return;
+      if (paymentSelect.value === "split") {
+        splitSection.classList.remove("hidden");
+      } else {
+        splitSection.classList.add("hidden");
+      }
+    }
+    
+    if (paymentSelect) {
+      toggleSplit();
+      paymentSelect.addEventListener("change", toggleSplit);
+    }
+  });
+</script>

@@ -1,0 +1,91 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+  <div class="flex flex-col sm:flex-row justify-between items-center bg-[#1e293b] p-6 rounded-2xl border border-slate-700/80 shadow-xl gap-4">
+    <div class="space-y-1 text-center sm:text-left">
+      <span class="inline-block text-[10px] font-extrabold text-blue-400 uppercase tracking-widest bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20">
+        Logistics & Dispatch Terminal
+      </span>
+      <h2 class="text-2xl font-black text-white tracking-tight">Active Delivery & Online Orders</h2>
+    </div>
+    <div class="flex items-center gap-3">
+      <span class="bg-slate-800 text-slate-300 text-xs font-bold px-4 py-2 rounded-xl border border-slate-700">
+        Pending Dispatches: <strong class="text-blue-400"><%= @orders.count %></strong>
+      </span>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <% @orders.each do |order| %>
+      <div class="bg-[#1e293b] rounded-2xl border border-slate-700/80 shadow-xl flex flex-col overflow-hidden">
+        <div class="bg-slate-800/80 p-4 border-b border-slate-700/60 flex justify-between items-center">
+          <div>
+            <span class="text-xs font-bold text-slate-400 uppercase">Order ID</span>
+            <h3 class="text-lg font-black text-white">#<%= order.id %></h3>
+          </div>
+          <div class="text-right">
+            <span class="text-[10px] uppercase font-bold px-2.5 py-1 rounded-md bg-blue-900/50 text-blue-400 border border-blue-800">
+              <%= order.fulfillment_type.presence || order.service_mode&.titleize || 'Delivery' %>
+            </span>
+            <span class="block text-[10px] text-slate-400 mt-1"><%= time_ago_in_words(order.created_at) %> ago</span>
+          </div>
+        </div>
+
+        <div class="px-4 py-3 bg-[#0f172a]/50 border-b border-slate-700/40 text-xs flex justify-between items-center text-slate-300">
+          <span>Customer: <strong class="text-white"><%= order.customer_name.presence || 'Online Buyer' %></strong></span>
+          <span class="text-blue-400 font-semibold"><%= order.payment_method&.titleize || 'Online Transfer' %></span>
+        </div>
+
+        <%# Customer Phone & Quick Communication Links (Call & WhatsApp) %>
+        <% customer_phone = order.respond_to?(:phone) ? order.phone : (order.respond_to?(:customer_phone) ? order.customer_phone : nil) %>
+        <% if customer_phone.present? %>
+          <div class="px-4 py-2.5 bg-slate-800/40 border-b border-slate-700/40 flex items-center justify-between gap-2">
+            <span class="text-xs text-slate-300 truncate">📞 <%= customer_phone %></span>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <a href="tel:<%= customer_phone %>" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold rounded-lg transition shadow">
+                Call
+              </a>
+              <% clean_phone = customer_phone.to_s.gsub(/\D/, '') %>
+              <a href="https://wa.me/<%= clean_phone %>?text=Hello%20<%= CGI.escape(order.customer_name.to_s) %>,%20I%20am%20contacting%20you%20from%20dispatch%20regarding%20your%20order%20%23<%= order.id %>." 
+                 target="_blank" 
+                 class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold rounded-lg transition shadow">
+                WhatsApp
+              </a>
+            </div>
+          </div>
+        <% end %>
+
+        <div class="p-4 flex-1 space-y-3">
+          <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Packages / Items to Dispatch:</span>
+          <div class="space-y-2">
+            <% order.order_items.each_with_index do |item, index| %>
+              <div class="flex justify-between items-center bg-[#0f172a] p-3 rounded-xl border border-slate-700/60">
+                <div>
+                  <span class="text-sm font-bold text-white"><%= item.name || item.menu_item&.name %></span>
+                  <% if item.respond_to?(:notes) && item.notes.present? %>
+                    <p class="text-[11px] text-slate-400 italic mt-0.5">Note: <%= item.notes %></p>
+                  <% end %>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-[10px] px-2 py-0.5 bg-slate-800 text-slate-300 rounded border border-slate-700">Bag <%= index + 1 %></span>
+                  <span class="bg-slate-800 text-blue-400 text-xs font-black px-2.5 py-1 rounded-lg border border-slate-700">
+                    x<%= item.quantity %>
+                  </span>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <div class="p-4 bg-slate-900/60 border-t border-slate-700/60 flex gap-2">
+          <%= button_to "Mark Dispatched / Out for Delivery", update_status_dispatch_order_path(order, status: 'dispatched'), method: :patch, class: "flex-1 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-3 px-3 rounded-xl transition text-center shadow-lg cursor-pointer" %>
+        </div>
+      </div>
+    <% end %>
+
+    <% if @orders.empty? %>
+      <div class="col-span-full py-16 bg-[#1e293b] rounded-2xl border border-slate-700/80 text-center space-y-2">
+        <p class="text-sm font-bold text-slate-400">No active deliveries right now.</p>
+        <p class="text-xs text-slate-500">Online takeaway and home delivery orders will populate here automatically.</p>
+      </div>
+    <% end %>
+  </div>
+</div>

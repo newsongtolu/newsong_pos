@@ -1,0 +1,63 @@
+<div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; max-width: 600px; margin: 0 auto;">
+  <%= form_with(model: [:super_admin, @user], local: true, class: "space-y-4") do |f| %>
+    <% if @user.errors.any? %>
+      <div style="background: rgba(220, 38, 38, 0.2); border: 1px solid #dc2626; color: #fca5a5; padding: 12px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 16px;">
+        <h4 style="margin: 0 0 4px 0; font-weight: bold;">Please fix the following errors:</h4>
+        <ul style="margin: 0; padding-left: 18px;">
+          <% @user.errors.full_messages.each do |msg| %>
+            <li><%= msg %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div style="margin-bottom: 16px;">
+      <label style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 600;">Full Name</label>
+      <%= f.text_field :name, placeholder: "e.g. Super Admin / Staff Name", style: "width: 100%; background: #0b0f19; border: 1px solid var(--border-color); color: var(--text-main); padding: 10px 12px; border-radius: 8px; font-size: 0.9rem;" %>
+    </div>
+
+    <div style="margin-bottom: 16px;">
+      <label style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 600;">Email Address (Login ID)</label>
+      <%= f.email_field :email, placeholder: "user@newsongcookitz.com", style: "width: 100%; background: #0b0f19; border: 1px solid var(--border-color); color: var(--text-main); padding: 10px 12px; border-radius: 8px; font-size: 0.9rem;" %>
+    </div>
+
+    <div style="margin-bottom: 16px;">
+      <label style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 600;">Access Role</label>
+      <%= f.select :role, [
+            ['Super Admin', 'super_admin'],
+            ['Manager / Admin', 'admin'],
+            ['Cashier', 'cashier'], 
+            ['Kitchen Crew', 'kitchen'], 
+            ['Floor Staff', 'floor'], 
+            ['Dispatch Rider', 'dispatch']
+          ], { prompt: "Select User Role" }, style: "width: 100%; background: #0b0f19; border: 1px solid var(--border-color); color: var(--text-main); padding: 10px 12px; border-radius: 8px; font-size: 0.9rem;" %>
+    </div>
+
+    <div style="margin-bottom: 16px;">
+      <label style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 600;">Station Assignment</label>
+      <%= f.select :station, [
+            ['Super Admin Terminal', 'super_admin'],
+            ['General Admin', 'admin'],
+            ['Cashier Terminal', 'cashier'], 
+            ['Kitchen Station', 'kitchen'], 
+            ['Floor Station', 'floor'], 
+            ['Dispatch Station', 'dispatch']
+          ], { prompt: "Select Station" }, style: "width: 100%; background: #0b0f19; border: 1px solid var(--border-color); color: var(--text-main); padding: 10px 12px; border-radius: 8px; font-size: 0.9rem;" %>
+    </div>
+
+    <div style="margin-bottom: 16px;">
+      <label style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 600;">Password <%= "(leave blank if unchanged)" unless @user.new_record? %></label>
+      <%= f.password_field :password, placeholder: "••••••••", style: "width: 100%; background: #0b0f19; border: 1px solid var(--border-color); color: var(--text-main); padding: 10px 12px; border-radius: 8px; font-size: 0.9rem;" %>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+      <label style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 600;">Confirm Password</label>
+      <%= f.password_field :password_confirmation, placeholder: "••••••••", style: "width: 100%; background: #0b0f19; border: 1px solid var(--border-color); color: var(--text-main); padding: 10px 12px; border-radius: 8px; font-size: 0.9rem;" %>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 10px;">
+      <%= link_to "Cancel", super_admin_users_path, class: "btn", style: "background: #374151;" %>
+      <%= f.submit @user.new_record? ? "Create User Account" : "Update Account", class: "btn", style: "background: #f59e0b; cursor: pointer;" %>
+    </div>
+  <% end %>
+</div>

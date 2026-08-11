@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Master System Configuration - Super Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root { --bg-main: #0b0f19; --bg-card: #151c2c; --border-color: #26334d; --text-main: #f1f5f9; --text-muted: #94a3b8; --accent: #f59e0b; }
+    body { background-color: var(--bg-main); color: var(--text-main); font-family: system-ui, sans-serif; margin: 0; padding: 20px; }
+    .container { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+    .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+    .btn { background: var(--accent); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-block; font-size: 0.95rem; }
+    input[type="text"], input[type="number"], select { width: 100%; background: #0b0f19; border: 1px solid var(--border-color); color: white; padding: 10px; border-radius: 6px; margin-top: 6px; box-sizing: border-box; }
+    label { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; display: block; }
+    .section-title { font-size: 1.1rem; color: #f59e0b; margin-top: 0; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+    .toggle-row { display: flex; justify-content: space-between; align-items: center; background: #0b0f19; border: 1px solid var(--border-color); padding: 14px; border-radius: 8px; margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <h1 style="margin: 0; font-size: 1.5rem; color: #f59e0b;">⚡ Master System Configuration</h1>
+        <p style="margin: 4px 0 0 0; color: var(--text-muted); font-size: 0.85rem;">Directly control global runtime states, operational modes, and POS parameters.</p>
+      </div>
+      <%= link_to "← Super Admin Dashboard", super_admin_dashboards_path, class: "btn", style: "background: #374151; padding: 8px 14px;" %>
+    </div>
+
+    <% if flash[:notice] %>
+      <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; color: #34d399; padding: 14px; border-radius: 8px; font-size: 0.9rem;">
+        ✓ <%= flash[:notice] %>
+      </div>
+    <% end %>
+
+    <%= form_with model: @app_setting, url: super_admin_settings_path, method: :patch do |f| %>
+      
+      <!-- CORE SYSTEM STATES -->
+      <div class="card">
+        <h3 class="section-title">🔒 System Runtime Controls</h3>
+        
+        <div class="toggle-row">
+          <div>
+            <strong style="font-size: 0.95rem;">System Maintenance Mode</strong>
+            <p style="margin: 2px 0 0 0; font-size: 0.75rem; color: var(--text-muted);">Locks out regular staff and cashiers during system upgrades.</p>
+          </div>
+          <div>
+            <%= f.check_box :maintenance_mode, style: "width: 20px; height: 20px; accent-color: #f59e0b; cursor: pointer;" %>
+          </div>
+        </div>
+
+        <div class="toggle-row">
+          <div>
+            <strong style="font-size: 0.95rem;">Allow Cashier Override</strong>
+            <p style="margin: 2px 0 0 0; font-size: 0.75rem; color: var(--text-muted);">Permits managers/cashiers to bypass standard pricing limits.</p>
+          </div>
+          <div>
+            <%= f.check_box :allow_staff_override, style: "width: 20px; height: 20px; accent-color: #f59e0b; cursor: pointer;" %>
+          </div>
+        </div>
+
+        <div style="margin-top: 16px;">
+          <%= f.label :operational_mode, "POS Operational / Pre-stack Mode" %>
+          <%= f.select :operational_mode, options_for_select([['Standard POS Mode', 'standard'], ['Quick-Serve / Fast Food Mode', 'quick_serve'], ['Pre-stack / Offline Sync Mode', 'pre_stack']], @app_setting.operational_mode) %>
+        </div>
+      </div>
+
+      <!-- BUSINESS PARAMETERS -->
+      <div class="card">
+        <h3 class="section-title">🏢 Business & Financial Setup</h3>
+        
+        <div style="margin-bottom: 14px;">
+          <%= f.label :restaurant_name, "Restaurant / Business Name" %>
+          <%= f.text_field :restaurant_name, placeholder: "e.g. Newsong Cookitz" %>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+          <div>
+            <%= f.label :tax_rate, "Default Tax Rate (%)" %>
+            <%= f.number_field :tax_rate, step: "0.01", placeholder: "e.g. 7.5" %>
+          </div>
+          <div>
+            <%= f.label :currency, "Currency Symbol" %>
+            <%= f.text_field :currency, placeholder: "e.g. ₦" %>
+          </div>
+        </div>
+
+        <div>
+          <%= f.label :receipt_footer_note, "Default Receipt Footer Message" %>
+          <%= f.text_field :receipt_footer_note, placeholder: "e.g. Thank you for your patronage! Goods sold cannot be returned." %>
+        </div>
+      </div>
+
+      <!-- SUPPORT & PAYMENT LINKS -->
+      <div class="card">
+        <h3 class="section-title">🔗 Support & Online Payment Channels</h3>
+        
+        <div style="margin-bottom: 14px;">
+          <%= f.label :paystack_link, "Paystack Payment Link (For Online Takeaway & Home Delivery)" %>
+          <%= f.text_field :paystack_link, placeholder: "e.g. https://paystack.com/pay/your-business-link" %>
+        </div>
+
+        <div>
+          <%= f.label :whatsapp_number, "WhatsApp Support Number" %>
+          <%= f.text_field :whatsapp_number, placeholder: "e.g. 2348012345678 (no plus signs or spaces)" %>
+        </div>
+      </div>
+
+      <div>
+        <%= f.submit "Save Master Configuration", class: "btn", style: "width: 100%; text-align: center; background: #f59e0b;" %>
+      </div>
+
+    <% end %>
+  </div>
+</body>
+</html>
