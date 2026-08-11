@@ -45,7 +45,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_013945) do
     t.integer "category_id"
     t.datetime "created_at", null: false
     t.text "description"
-    t.boolean "in_stock"
+    t.boolean "in_stock", default: true, null: false
     t.string "name"
     t.decimal "price"
     t.boolean "requires_double_container"
@@ -100,6 +100,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_013945) do
     t.index ["order_id"], name: "index_payment_transactions_on_order_id"
   end
 
+  create_table "payments", force: :cascade do |t|
+    t.decimal "amount", precision: 10, scale: 2
+    t.datetime "created_at", null: false
+    t.integer "order_id", null: false
+    t.string "payment_method"
+    t.datetime "updated_at", null: false
+    t.index ["order_id"], name: "index_payments_on_order_id"
+  end
+
   create_table "products", force: :cascade do |t|
     t.string "category"
     t.datetime "created_at", null: false
@@ -150,4 +159,5 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_013945) do
   add_foreign_key "order_items", "containers"
   add_foreign_key "order_items", "orders"
   add_foreign_key "payment_transactions", "orders"
+  add_foreign_key "payments", "orders"
 end

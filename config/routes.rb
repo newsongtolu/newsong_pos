@@ -1,12 +1,12 @@
 Rails.application.routes.draw do
-  # 1. Staff Authentication with Custom Sessions Controller
+  # 1. Staff Authentication with Custom Sessions Controller & OTP Routes
   devise_for :users, controllers: {
-    sessions: 'sessions'
+    sessions: 'users/sessions'
   }
 
   devise_scope :user do
-    get "verify_otp", to: "sessions#verify_otp", as: :verify_otp
-    post "verify_otp", to: "sessions#confirm_otp", as: :confirm_otp
+    get 'verify_otp', to: 'users/sessions#verify_otp', as: :verify_otp
+    post 'confirm_otp', to: 'users/sessions#confirm_otp', as: :confirm_otp
   end
 
   # 2. Public Customer-Facing Gateway and Menu

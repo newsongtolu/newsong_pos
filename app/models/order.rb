@@ -1,9 +1,12 @@
 class Order < ApplicationRecord
   has_many :order_items, dependent: :destroy
-  accepts_nested_attributes_for :order_items, allow_destroy: true, reject_if: :all_blank
+  has_many :payments, dependent: :destroy
   
-  # Virtual attributes for split payments
-  attr_accessor :split_method_1, :split_amount_1, :split_method_2, :split_amount_2
+  accepts_nested_attributes_for :order_items, allow_destroy: true, reject_if: :all_blank
+  accepts_nested_attributes_for :payments, allow_destroy: true, reject_if: :all_blank
+  
+  # Virtual attributes for payment handling and split payments
+  attr_accessor :new_payment_method, :split_method_1, :split_amount_1, :split_method_2, :split_amount_2
   
   before_validation :assign_defaults, on: :create
   before_save :calculate_grand_total

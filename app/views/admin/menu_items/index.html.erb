@@ -24,7 +24,7 @@
     <div style="display: flex; justify-content: space-between; align-items: center;">
       <div>
         <h1 style="margin: 0; font-size: 1.4rem; color: #34d399;">📋 Menu & Pricing Control</h1>
-        <p style="margin: 4px 0 0 0; color: var(--text-muted); font-size: 0.85rem;">Add food items, update prices, or toggle availability instantly[cite: 2].</p>
+        <p style="margin: 4px 0 0 0; color: var(--text-muted); font-size: 0.85rem;">Add food items, update prices, or toggle availability instantly.</p>
       </div>
       <%= link_to "← Back to Dashboard", admin_dashboards_path, class: "btn", style: "background: #334155;" %>
     </div>
@@ -44,7 +44,14 @@
           </div>
           <div>
             <label style="font-size: 0.8rem; color: var(--text-muted);">Category</label>
-            <%= f.select :category, options_for_select(['Rice', 'Swallow', 'Proteins', 'Drinks', 'Special Packages']), {}, required: true %>
+            <%= f.text_field :category, list: 'category-options', placeholder: "Type or select category...", required: true %>
+            <datalist id="category-options">
+              <option value="Rice">
+              <option value="Swallow">
+              <option value="Proteins">
+              <option value="Drinks">
+              <option value="Special Packages">
+            </datalist>
           </div>
         </div>
         <div style="margin-bottom: 12px;">

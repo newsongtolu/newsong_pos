@@ -69,7 +69,7 @@
     .banner p { margin: 0; color: var(--text-muted); font-size: 0.85rem; line-height: 1.4; }
     
     /* STATS GRID */
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; width: 100%; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; width: 100%; }
     .stat-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; text-align: left; }
     .stat-title { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; }
     .stat-value { font-size: 1.4rem; font-weight: 800; color: var(--brand-bottom); margin-top: 6px; }
@@ -136,6 +136,10 @@
         <div class="stat-value">₦<%= number_with_delimiter(number_with_precision(@total_pos || 0, precision: 2)) %></div>
       </div>
       <div class="stat-card">
+        <div class="stat-title">Bank Transfers</div>
+        <div class="stat-value">₦<%= number_with_delimiter(number_with_precision(@total_transfer || 0, precision: 2)) %></div>
+      </div>
+      <div class="stat-card">
         <div class="stat-title">Paystack Link</div>
         <div class="stat-value">₦<%= number_with_delimiter(number_with_precision(@total_paystack || 0, precision: 2)) %></div>
       </div>
@@ -166,7 +170,6 @@
             </ul>
           </div>
         <% end %>
-
       </div>
 
       <div style="margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
@@ -183,7 +186,6 @@
             <% end %>
           </ul>
         </div>
-
         <div class="ledger-sub-card">
           <div class="ledger-sub-title">Logistics & Core Revenue Summary</div>
           <ul class="ledger-list" style="margin-top: 4px;">

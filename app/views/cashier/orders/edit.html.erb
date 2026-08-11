@@ -94,10 +94,10 @@
         </div>
       </div>
 
-      <!-- Payment Method Dropdown -->
+      <!-- Payment Method for New Add-ons (Single Unified Dropdown) -->
       <div class="space-y-2 pt-2">
-        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Payment Method</label>
-        <%= f.select :payment_method, options_for_select([['Cash', 'cash'], ['Bank Transfer', 'transfer'], ['POS', 'pos'], ['Split Payment', 'split']], @order.payment_method), { prompt: 'Select Payment Method' }, { id: "payment-method-select", class: "w-full bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-white font-medium focus:outline-none focus:border-amber-500 text-sm" } %>
+        <label class="block text-xs font-bold text-amber-400 uppercase tracking-wider">Payment Method for New Add-ons (If adding items)</label>
+        <%= f.select :new_payment_method, options_for_select([['Cash', 'cash'], ['Bank Transfer', 'transfer'], ['POS', 'pos'], ['Split Payment', 'split']], @order.new_payment_method), { prompt: 'Select Payment Method for New Items' }, { id: "new-payment-method-select", class: "w-full bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-white font-medium focus:outline-none focus:border-amber-500 text-sm" } %>
       </div>
 
       <!-- Split Payment Dynamic Section -->
@@ -143,7 +143,7 @@
 
 <script>
   document.addEventListener("DOMContentLoaded", () => {
-    const paymentSelect = document.getElementById("payment-method-select");
+    const paymentSelect = document.getElementById("new-payment-method-select");
     const splitSection = document.getElementById("split-payment-section");
     
     function toggleSplit() {

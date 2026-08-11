@@ -1,26 +1,35 @@
 module Dispatch
   class OrdersController < ApplicationController
+    before_action :authenticate_user!
+
     def index
-      # Dispatch strictly handles Online Takeaway and Home Delivery when marked ready by the kitchen
+      # Dispatch handles orders when they are ready or currently out for delivery
       @orders = Order.for_dispatch
-                     .where(dispatch_status: 'ready_for_dispatch')
-                     .where.not(status: ["delivered", "completed", "cancelled"])
-                     .order(created_at: :asc)
+                   .where(dispatch_status: ['ready_for_dispatch', 'out_for_delivery'])
+                   .where.not(status: ["delivered", "completed", "cancelled"])
+                   .order(created_at: :asc)
     end
 
     def update_status
       @order = Order.find(params[:id])
       new_status = params[:status]
-      
-      update_attrs = { status: new_status }
-      # If marked delivered, update dispatch status to clear it from the active delivery board
-      update_attrs[:dispatch_status] = 'completed' if new_status == "delivered"
 
-      if @order.update(update_attrs)
-        status_label = new_status == "delivered" ? "Delivered" : "Out for Delivery"
-        redirect_to dispatch_orders_path, notice: "Order status updated to #{status_label}."
+      if new_status == "out_for_delivery"
+        # Step 1: Update dispatch status so it stays on the board as out for delivery
+        if @order.update(dispatch_status: 'out_for_delivery')
+          redirect_to dispatch_orders_path, notice: "Order status updated to Out for Delivery."
+        else
+          redirect_to dispatch_orders_path, alert: "Could not update status."
+        end
+      elsif new_status == "delivered"
+        # Step 2: Finalize order as delivered and clear it from the active delivery board
+        if @order.update(status: 'delivered', dispatch_status: 'completed')
+          redirect_to dispatch_orders_path, notice: "Order marked as Delivered and cleared from board."
+        else
+          redirect_to dispatch_orders_path, alert: "Could not update status."
+        end
       else
-        redirect_to dispatch_orders_path, alert: "Could not update status."
+        redirect_to dispatch_orders_path, alert: "Invalid status update."
       end
     end
   end

@@ -5,7 +5,6 @@ module Cashier
     def index
       @orders = Order.where(status: ["Pending", nil])
       
-      # Search functionality for cashier display queue
       if params[:search].present?
         search_term = "%#{params[:search]}%"
         @orders = @orders.where("customer_name LIKE ? OR phone LIKE ?", search_term, search_term)
@@ -20,12 +19,12 @@ module Cashier
       @order.status ||= "Pending"
       @order.added_by ||= params[:added_by].presence || "inputed by customer"
       
-      # Safety Net: If grand total is missing or 0, calculate it from order items
       if (@order.grand_total.nil? || @order.grand_total == 0) && @order.order_items.any?
         @order.grand_total = @order.order_items.sum { |item| item.price.to_f * item.quantity.to_f }
       end
       
       if @order.save
+        create_payment_records(@order, params[:order] || params)
         Rails.logger.info ">>> SUCCESS: Order ##{@order.id} saved with #{@order.order_items.count} items and total ₦#{@order.grand_total}."
         render json: { success: true, order_id: @order.id }, status: :ok
       else
@@ -49,12 +48,9 @@ module Cashier
         render json: { success: false, error: "Order not found" }, status: :not_found and return
       end
 
-      # Parse raw JSON body if frontend sends data via fetch/JSON payload
       json_body = {}
       begin
-        if request.raw_post.present?
-          json_body = JSON.parse(request.raw_post) rescue {}
-        end
+        json_body = JSON.parse(request.raw_post) rescue {} if request.raw_post.present?
       rescue => e
         Rails.logger.error ">>> JSON parse error in append_item: #{e.message}"
       end
@@ -62,7 +58,6 @@ module Cashier
       combined_params = params.to_unsafe_h.deep_merge(json_body.is_a?(Hash) ? json_body : {})
       o_params = combined_params[:order].is_a?(Hash) ? combined_params[:order] : combined_params
 
-      # Process and append new containers, dine-in items, or raw item arrays to the order record
       process_items_for_order(@order, o_params, combined_params)
 
       active_items = @order.order_items.reject { |item| item.marked_for_destruction? }
@@ -70,7 +65,14 @@ module Cashier
       supplied_total = (o_params[:grand_total] || combined_params[:grand_total] || 0).to_s.gsub(/[^\d.]/, '').to_f
       final_total = supplied_total > 0 ? supplied_total : calculated_total
 
+      appended_items = @order.order_items.select(&:new_record?)
+      appended_total = appended_items.sum { |item| item.price.to_f * item.quantity.to_f }
+
       if @order.update(grand_total: final_total)
+        if appended_total > 0
+          create_payment_records(@order, o_params, appended_total)
+        end
+
         Rails.logger.info ">>> SUCCESS: Order ##{@order.id} successfully updated with appended items. New total: ₦#{@order.grand_total}"
         respond_to do |format|
           format.html { redirect_to edit_cashier_order_path(@order), notice: "New items added successfully." }
@@ -89,13 +91,20 @@ module Cashier
       @order = Order.find(params[:id])
       
       if @order.update(order_params)
-        # Recalculate total accurately
         active_items = @order.order_items.reject { |item| item.marked_for_destruction? rescue false }
         new_total = active_items.sum { |item| item.price.to_f * item.quantity.to_f }
         @order.update(grand_total: new_total)
         
+        # Check if a new payment method or split was submitted during update
+        sub_params = params[:order] || {}
+        if sub_params[:new_payment_method].present? || sub_params[:payment_method].present?
+          appended_total = @order.order_items.where(is_appended: true).sum { |item| item.price.to_f * item.quantity.to_f }
+          target_amount = appended_total > 0 ? appended_total : new_total
+          create_payment_records(@order, sub_params, target_amount)
+        end
+        
         Rails.logger.info ">>> SUCCESS: Order ##{@order.id} updated."
-        redirect_to cashier_order_path(@order), notice: "Order updated successfully. Please verify receipt."
+        redirect_to cashier_orders_path, notice: "Order updated successfully."
       else
         Rails.logger.error ">>> FAILED TO UPDATE ORDER: ##{@order.id}"
         render :edit, status: :unprocessable_entity
@@ -105,7 +114,6 @@ module Cashier
     def verify_payment
       @order = Order.find(params[:id])
       
-      # 🛑 FIXED: Only trigger kitchen routing when explicitly verified here
       if @order.update(status: "Verified", kitchen_status: "sent")
         Rails.logger.info ">>> SUCCESS: Order ##{@order.id} verified and routed to kitchen."
         redirect_to cashier_orders_path, notice: "Order verified successfully and sent to kitchen!"
@@ -116,8 +124,35 @@ module Cashier
 
     private
 
+    # Unified payment record generator ensuring clean lowercase keys ("cash", "pos", "transfer", "split")
+    def create_payment_records(order, data_source, custom_amount = nil)
+      method_key = data_source[:new_payment_method].presence || data_source[:payment_method].presence || order.payment_method.presence || "cash"
+      method_key = method_key.to_s.downcase.strip
+
+      amount_to_log = custom_amount.present? ? custom_amount.to_f : order.grand_total.to_f
+
+      if method_key == "split" || data_source[:split_method_1].present?
+        s_method_1 = (data_source[:split_method_1] || "cash").to_s.downcase.strip
+        s_amount_1 = (data_source[:split_amount_1] || 0).to_f
+        s_method_2 = (data_source[:split_method_2] || "").to_s.downcase.strip
+        s_amount_2 = (data_source[:split_amount_2] || 0).to_f
+
+        order.payments.create(payment_method: s_method_1, amount: s_amount_1) if s_amount_1 > 0
+        order.payments.create(payment_method: s_method_2, amount: s_amount_2) if s_method_2.present? && s_amount_2 > 0
+      else
+        # Normalize general names like "bank transfer" or "transfer" into standard keys
+        normalized_method = case method_key
+                            when /transfer/ then "transfer"
+                            when /pos/ then "pos"
+                            when /split/ then "split"
+                            else "cash"
+                            end
+
+        order.payments.create(payment_method: normalized_method, amount: amount_to_log) if amount_to_log > 0
+      end
+    end
+
     def process_items_for_order(order, o_params, combined_params)
-      # Handle containerized takeaway/delivery items sent from the frontend POS
       containers = o_params[:containers] || combined_params[:containers]
       if containers.present?
         containers_list = containers.is_a?(Hash) ? containers.values : containers
@@ -146,7 +181,6 @@ module Cashier
         end
       end
 
-      # Handle dine-in items sent from the frontend POS
       dine_in_items = o_params[:dine_in_items] || combined_params[:dine_in_items]
       if dine_in_items.present?
         items_enum = dine_in_items.is_a?(Hash) ? dine_in_items.values : dine_in_items
@@ -161,7 +195,6 @@ module Cashier
         end
       end
 
-      # Standard fallback items list processing
       raw_items = o_params[:order_items_attributes] || o_params[:order_items] || o_params[:items] || o_params[:cart_items] || 
                   combined_params[:order_items_attributes] || combined_params[:order_items] || combined_params[:items] || combined_params[:cart_items]
       if raw_items.present?
@@ -186,8 +219,9 @@ module Cashier
         :customer_name, 
         :phone, 
         :payment_method, 
+        :new_payment_method,
         :grand_total,
-        :service_mode,       
+        :service_mode,      
         :fulfillment_type,   
         :split_method_1, 
         :split_amount_1, 
