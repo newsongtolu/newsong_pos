@@ -1,8 +1,10 @@
 production:
-  primary: &primary_production
-    adapter: sqlite3
-    database: /data/production.sqlite3
+  primary:
+    adapter: postgresql
+    encoding: unicode
+    pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+    url: <%= ENV["DATABASE_URL"] %>
   cable:
-    <<: *primary_production
-    database: /data/production_cable.sqlite3
+    adapter: postgresql
+    url: <%= ENV["DATABASE_URL"] %>
     migrations_paths: db/cable_migrate
