@@ -56,12 +56,11 @@ RUN chmod +x bin/* && \
     sed -i "s/\r$//g" bin/* && \
     sed -i 's/ruby\.exe$/ruby/' bin/*
 
-# Precompiling assets for production without requiring secret RAILS_MASTER_KEY
+# Precompiling assets for production with dummy keys and prepared sqlite database
 RUN mkdir -p /data && \
     RAILS_MASTER_KEY=1234567890abcdef1234567890abcdef \
     SECRET_KEY_BASE_DUMMY=1 \
-    ./bin/rails assets:precompile
-
+    bundle exec rails db:prepare assets:precompile
 
 # Final stage for app image
 FROM base
