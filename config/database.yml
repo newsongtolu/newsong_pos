@@ -1,15 +1,8 @@
-default: &default
-  adapter: sqlite3
-  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-
-development:
-  <<: *default
-  database: storage/development.sqlite3
-
-test:
-  <<: *default
-  database: storage/test.sqlite3
-
 production:
-  <<: *default
-  database: /data/production.sqlite3
+  primary: &primary_production
+    adapter: sqlite3
+    database: /data/production.sqlite3
+  cable:
+    <<: *primary_production
+    database: /data/production_cable.sqlite3
+    migrations_paths: db/cable_migrate
