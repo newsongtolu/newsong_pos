@@ -8,6 +8,12 @@ export default class extends Controller {
     if (orderId) {
       localStorage.setItem("active_order_id", orderId)
       
+      if (!urlParams.get("order_id") && !urlParams.get("order") && !urlParams.get("id")) {
+        const newUrl = new URL(window.location.href)
+        newUrl.searchParams.set("order_id", orderId)
+        window.history.replaceState({}, '', newUrl)
+      }
+      
       const entryGates = document.querySelectorAll(
         "#splash-screen, #service-gate-modal, .service-gate, [id*='service-gate'], [class*='service-gate']"
       )
@@ -17,14 +23,68 @@ export default class extends Controller {
       })
     }
 
+    // --- RESTORE VISUAL CART ITEMS ON REFRESH ---
+    let cartItems = []
+    const amendmentKey = orderId ? `amendment_cart_${orderId}` : null
+    if (amendmentKey && localStorage.getItem(amendmentKey)) {
+      try {
+        cartItems = JSON.parse(localStorage.getItem(amendmentKey))
+      } catch (err) {}
+    }
+    if (cartItems.length === 0) {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        const val = localStorage.getItem(key)
+        if (key && (key.toLowerCase().includes("cart") || key.toLowerCase().includes("menu") || key.toLowerCase().includes("pos"))) {
+          try {
+            const parsed = JSON.parse(val)
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              cartItems = parsed
+              break
+            }
+          } catch (err) {}
+        }
+      }
+    }
+
+    // If we found saved cart items, automatically render them into the cart UI container
+    if (cartItems.length > 0) {
+      const cartContainer = document.querySelector(".cart-items-list, #cart-items-list, [data-cart-items]")
+      const emptyMsg = document.querySelector("#cart-empty-msg, .cart-empty")
+      if (cartContainer) {
+        if (emptyMsg) emptyMsg.style.display = "none"
+        
+        // Only inject if container is currently empty to avoid duplication
+        if (!cartContainer.hasChildNodes() || cartContainer.children.length === 0) {
+          cartItems.forEach(item => {
+            const row = document.createElement("div")
+            row.className = "cart-container-row"
+            row.innerHTML = `
+              <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <span>${item.name || item.title || "Item"} (x${item.quantity || item.qty || 1})</span>
+                <span>₦${((item.price || item.amount || 0) * (item.quantity || item.qty || 1)).toLocaleString()}</span>
+              </div>
+            `
+            cartContainer.appendChild(row)
+          })
+        }
+      }
+      
+      // Update badge counts if they exist
+      const badge = document.querySelector("#header-cart-count, .cart-counter-badge")
+      if (badge) {
+        const totalQty = cartItems.reduce((sum, i) => sum + (parseInt(i.quantity || i.qty || 1)), 0)
+        badge.textContent = totalQty
+      }
+    }
+    // -------------------------------------------
+
     const form = this.element.querySelector("form")
     if (form) {
-      // Pull fulfillment type from the form data attributes or hidden fields
       const formFulfillment = form.dataset.fulfillmentType || form.dataset.serviceMode || 
                               document.querySelector("[data-order-fulfillment]")?.dataset.orderFulfillment ||
-                              document.querySelector("input[name*='fulfillment_type']")?.value || "takeaway"
+                              document.querySelector("input[name*='fulfillment_type']")?.value || localStorage.getItem("pos_fulfillment_mode") || "takeaway"
       if (formFulfillment) {
-        // Force-set all possible storage keys used by different parts of your POS frontend
         localStorage.setItem("pos_fulfillment_mode", formFulfillment)
         localStorage.setItem("active_order_fulfillment", formFulfillment)
         localStorage.setItem("fulfillment", formFulfillment)
@@ -32,7 +92,6 @@ export default class extends Controller {
         localStorage.setItem("order_type", formFulfillment)
       }
 
-      // --- REFRESH PERSISTENCE RESTORATION ---
       const savedDraft = localStorage.getItem("pos_form_draft")
       if (savedDraft) {
         try {
@@ -46,7 +105,6 @@ export default class extends Controller {
         } catch (err) {}
       }
 
-      // Save form fields automatically on input/change to prevent data loss on refresh
       if (!form.dataset.draftListenerAttached) {
         form.dataset.draftListenerAttached = "true"
         const saveDraft = () => {
@@ -59,50 +117,20 @@ export default class extends Controller {
         form.addEventListener("input", saveDraft)
         form.addEventListener("change", saveDraft)
       }
-      // ---------------------------------------
 
       if (!form.dataset.cartListenerAttached) {
         form.dataset.cartListenerAttached = "true"
         
         form.addEventListener("submit", (e) => {
-          // --- PAYSTACK DYNAMIC PAYMENT CHECK ---
           const paymentMethodInput = form.querySelector("input[name*='payment_method']:checked, select[name*='payment_method'], [data-payment-method].selected")
           const selectedPayment = paymentMethodInput ? (paymentMethodInput.value || paymentMethodInput.dataset.paymentMethod) : null
           
           if (selectedPayment && selectedPayment.toLowerCase().includes("paystack")) {
-            // Read the dynamic paystack link injected from meta tag or window global config if available
             const dynamicPaystackUrl = window.APP_PAYSTACK_LINK || form.dataset.paystackLink
             if (dynamicPaystackUrl) {
               e.preventDefault()
               window.location.href = dynamicPaystackUrl
               return
-            }
-          }
-          // --------------------------------------
-
-          let cartItems = []
-          let matchedKey = null
-          const amendmentKey = orderId ? `amendment_cart_${orderId}` : null
-          if (amendmentKey && localStorage.getItem(amendmentKey)) {
-            try {
-              cartItems = JSON.parse(localStorage.getItem(amendmentKey))
-              matchedKey = amendmentKey
-            } catch (err) {}
-          }
-          if (cartItems.length === 0) {
-            for (let i = 0; i < localStorage.length; i++) {
-              const key = localStorage.key(i)
-              const val = localStorage.getItem(key)
-              if (key && (key.toLowerCase().includes("cart") || key.toLowerCase().includes("menu") || key.toLowerCase().includes("pos"))) {
-                try {
-                  const parsed = JSON.parse(val)
-                  if (Array.isArray(parsed) && parsed.length > 0) {
-                    cartItems = parsed
-                    matchedKey = key
-                    break
-                  }
-                } catch (err) {}
-              }
             }
           }
 
@@ -122,8 +150,8 @@ export default class extends Controller {
             createInput("quantity", item.quantity || item.qty || 1)
           })
 
-          if (matchedKey) {
-            localStorage.removeItem(matchedKey)
+          if (amendmentKey) {
+            localStorage.removeItem(amendmentKey)
           }
           localStorage.removeItem("active_order_id")
           localStorage.removeItem("pos_form_draft")
