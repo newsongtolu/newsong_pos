@@ -7,23 +7,22 @@ module Users
         otp = rand(10000..99999).to_s
         user.update(otp_code: otp, otp_sent_at: Time.current)
 
-        Rails.logger.debug "========================================"
-        Rails.logger.debug " 🔐 YOUR 5-DIGIT OTP CODE IS: #{otp}"
-        Rails.logger.debug "========================================"
+        # Use .info so it actually outputs in Production Railway logs
+        Rails.logger.info "========================================"
+        Rails.logger.info " 🔐 YOUR 5-DIGIT OTP CODE IS: #{otp}"
+        Rails.logger.info "========================================"
 
-        # Safely attempt to send the email if SMTP is configured; won't crash if it fails
         begin
           StaffAuthMailer.verification_code(user, otp).deliver_later
         rescue => e
           Rails.logger.warn "Email delivery skipped or failed: #{e.message}"
         end
         
-        # Store user ID in session securely
         session[:otp_user_id] = user.id
 
         respond_to do |format|
-          # Shows the code on screen so you can log in instantly while keeping email support active
-          format.html { redirect_to verify_otp_path, notice: "Verification code generated! (Active Test Code: #{otp})", status: :see_other }
+          # Clean notice with NO code visible on the user interface
+          format.html { redirect_to verify_otp_path, notice: "A 5-digit verification code has been generated.", status: :see_other }
         end
       else
         flash.now[:alert] = "Invalid email or password."
