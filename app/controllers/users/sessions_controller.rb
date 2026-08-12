@@ -7,10 +7,11 @@ module Users
         otp = rand(10000..99999).to_s
         user.update(otp_code: otp, otp_sent_at: Time.current)
 
-        # Use warn so Railway forces it to display in production logs
-        Rails.logger.warn "========================================"
-        Rails.logger.warn " 🔐 YOUR 5-DIGIT OTP CODE IS: #{otp}"
-        Rails.logger.warn "========================================"
+        # Bulletproof direct output to STDOUT so Railway logs capture it instantly
+        otp_banner = "\n========================================\n 🔐 YOUR 5-DIGIT OTP CODE IS: #{otp}\n========================================"
+        STDOUT.puts otp_banner
+        STDOUT.flush
+        Rails.logger.warn otp_banner
 
         begin
           StaffAuthMailer.verification_code(user, otp).deliver_later
@@ -21,7 +22,6 @@ module Users
         session[:otp_user_id] = user.id
 
         respond_to do |format|
-          # Clean notice with NO code visible on the user interface
           format.html { redirect_to verify_otp_path, notice: "A 5-digit verification code has been generated.", status: :see_other }
         end
       else
