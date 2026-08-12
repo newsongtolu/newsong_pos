@@ -27,7 +27,16 @@ module Admin
     end
 
     def toggle_stock
-      @menu_item.update(in_stock: !@menu_item.in_stock)
+      # Safely toggle whichever stock column your model uses
+      current_status = @menu_item.respond_to?(:in_stock) ? @menu_item.in_stock : @menu_item.available
+      new_status = !current_status
+      
+      if @menu_item.respond_to?(:in_stock)
+        @menu_item.update(in_stock: new_status)
+      else
+        @menu_item.update(available: new_status)
+      end
+
       redirect_to admin_menu_items_path, notice: "#{@menu_item.name} stock status updated."
     end
 
@@ -43,7 +52,7 @@ module Admin
     end
 
     def menu_item_params
-  params.require(:menu_item).permit(:name, :price, :description, :available, :category_id, :image)
+      params.require(:menu_item).permit(:name, :price, :description, :available, :in_stock, :category_id, :image)
     end
   end
 end
