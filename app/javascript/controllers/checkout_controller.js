@@ -21,9 +21,8 @@ export default class extends Controller {
     if (form) {
       // Pull fulfillment type from the form data attributes or hidden fields
       const formFulfillment = form.dataset.fulfillmentType || form.dataset.serviceMode || 
-                            document.querySelector("[data-order-fulfillment]")?.dataset.orderFulfillment ||
-                            document.querySelector("input[name*='fulfillment_type']")?.value || "takeaway"
-
+                              document.querySelector("[data-order-fulfillment]")?.dataset.orderFulfillment ||
+                              document.querySelector("input[name*='fulfillment_type']")?.value || "takeaway"
       if (formFulfillment) {
         // Force-set all possible storage keys used by different parts of your POS frontend
         localStorage.setItem("pos_fulfillment_mode", formFulfillment)
@@ -32,6 +31,35 @@ export default class extends Controller {
         localStorage.setItem("service_mode", formFulfillment)
         localStorage.setItem("order_type", formFulfillment)
       }
+
+      // --- REFRESH PERSISTENCE RESTORATION ---
+      const savedDraft = localStorage.getItem("pos_form_draft")
+      if (savedDraft) {
+        try {
+          const draftData = JSON.parse(savedDraft)
+          Object.keys(draftData).forEach(key => {
+            const input = form.querySelector(`[name="${key}"]`)
+            if (input && !input.value) {
+              input.value = draftData[key]
+            }
+          })
+        } catch (err) {}
+      }
+
+      // Save form fields automatically on input/change to prevent data loss on refresh
+      if (!form.dataset.draftListenerAttached) {
+        form.dataset.draftListenerAttached = "true"
+        const saveDraft = () => {
+          const formData = {}
+          new FormData(form).forEach((val, key) => {
+            formData[key] = val
+          })
+          localStorage.setItem("pos_form_draft", JSON.stringify(formData))
+        }
+        form.addEventListener("input", saveDraft)
+        form.addEventListener("change", saveDraft)
+      }
+      // ---------------------------------------
 
       if (!form.dataset.cartListenerAttached) {
         form.dataset.cartListenerAttached = "true"
@@ -55,14 +83,12 @@ export default class extends Controller {
           let cartItems = []
           let matchedKey = null
           const amendmentKey = orderId ? `amendment_cart_${orderId}` : null
-
           if (amendmentKey && localStorage.getItem(amendmentKey)) {
             try {
               cartItems = JSON.parse(localStorage.getItem(amendmentKey))
               matchedKey = amendmentKey
             } catch (err) {}
           }
-
           if (cartItems.length === 0) {
             for (let i = 0; i < localStorage.length; i++) {
               const key = localStorage.key(i)
@@ -81,7 +107,6 @@ export default class extends Controller {
           }
 
           form.querySelectorAll("input.dynamic-cart-item").forEach(el => el.remove())
-
           cartItems.forEach((item, index) => {
             const createInput = (name, value) => {
               const input = document.createElement("input")
@@ -91,7 +116,6 @@ export default class extends Controller {
               input.className = "dynamic-cart-item"
               form.appendChild(input)
             }
-
             createInput("menu_item_id", item.id || item.menu_item_id || item.itemId)
             createInput("name", item.name || item.title || "")
             createInput("price", item.price || item.amount || 0)
@@ -102,6 +126,7 @@ export default class extends Controller {
             localStorage.removeItem(matchedKey)
           }
           localStorage.removeItem("active_order_id")
+          localStorage.removeItem("pos_form_draft")
         })
       }
     }
