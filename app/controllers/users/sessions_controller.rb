@@ -7,10 +7,10 @@ module Users
         otp = rand(10000..99999).to_s
         user.update(otp_code: otp, otp_sent_at: Time.current)
 
-        # Use .info so it actually outputs in Production Railway logs
-        Rails.logger.info "========================================"
-        Rails.logger.info " 🔐 YOUR 5-DIGIT OTP CODE IS: #{otp}"
-        Rails.logger.info "========================================"
+        # Use warn so Railway forces it to display in production logs
+        Rails.logger.warn "========================================"
+        Rails.logger.warn " 🔐 YOUR 5-DIGIT OTP CODE IS: #{otp}"
+        Rails.logger.warn "========================================"
 
         begin
           StaffAuthMailer.verification_code(user, otp).deliver_later
