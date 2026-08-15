@@ -153,7 +153,6 @@
     <div class="ledger-section">
       <div class="ledger-title">Channel Revenue & Payment Channel Disaggregation</div>
       <div class="ledger-grid">
-        
         <% @channel_metrics.each do |slug, data| %>
           <div class="ledger-sub-card">
             <div class="ledger-sub-title"><%= data[:name] %> (<%= data[:count] %> Orders)</div>
@@ -161,6 +160,7 @@
             <ul class="ledger-list">
               <% if data.key?(:paystack) %>
                 <li><span>Paystack Link:</span> <span>₦<%= number_with_delimiter(number_with_precision(data[:paystack], precision: 2)) %></span></li>
+                <li><span>Transfer:</span> <span>₦<%= number_with_delimiter(number_with_precision(data[:transfer], precision: 2)) %></span></li>
               <% else %>
                 <li><span>Cash:</span> <span>₦<%= number_with_delimiter(number_with_precision(data[:cash], precision: 2)) %></span></li>
                 <li><span>POS / Card:</span> <span>₦<%= number_with_delimiter(number_with_precision(data[:pos], precision: 2)) %></span></li>
@@ -221,8 +221,13 @@
                   <td style="padding: 10px 8px; font-weight: bold; color: var(--text-main);">#<%= order.id %></td>
                   <td style="padding: 10px 8px; color: var(--text-main);"><%= order.customer_name %></td>
                   <td style="padding: 10px 8px; color: var(--brand-bottom);"><%= order.phone %></td>
+<<<<<<< HEAD
                   <td style="padding: 10px 8px; font-weight: bold; color: var(--text-main);">₦<%= number_with_delimiter(number_with_precision(order.grand_total || order.payments.sum(:amount), precision: 2)) %></td>
                   <td style="padding: 10px 8px; color: var(--text-muted);"><%= (order.payment_method || order.payments.pluck(:payment_method).join(', ')).titleize %></td>
+=======
+                  <td style="padding: 10px 8px; font-weight: bold; color: var(--text-main);">₦<%= number_with_delimiter(number_with_precision(order.respond_to?(:grand_total) && order.grand_total ? order.grand_total : order.payments.sum(:amount), precision: 2)) %></td>
+                  <td style="padding: 10px 8px; color: var(--text-muted);"><%= (order.try(:payment_method) || order.payments.pluck(:payment_method).join(', ')).titleize %></td>
+>>>>>>> b748e60cfc88f71af3df100820f4a9deff4ed434
                   <td style="padding: 10px 8px; text-align: right;">
                     <%= link_to "Review Order", admin_orders_path(search: order.id), style: "background: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-main); padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; text-decoration: none;" %>
                   </td>

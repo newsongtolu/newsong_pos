@@ -53,11 +53,25 @@ class OrdersController < ApplicationController
 
     process_items_for_order(@order, o_params, combined_params, false)
 
+    # Check if any ordered items are out of stock
+    if @out_of_stock_error.present?
+      render json: { success: false, errors: [@out_of_stock_error] }, status: :unprocessable_entity and return
+    end
+
     calculated_total = @order.order_items.sum { |item| item.price.to_f * item.quantity.to_f }
     supplied_total = (o_params[:grand_total] || combined_params[:grand_total] || 0).to_s.gsub(/[^\d.]/, '').to_f
-    @order.grand_total = supplied_total > 0 ? supplied_total : calculated_total
+    final_total = supplied_total > 0 ? supplied_total : calculated_total
+    @order.grand_total = final_total
 
     if @order.save
+      # Log initial payment record for disaggregation tracking
+      if @order.respond_to?(:payments) && final_total > 0
+        normalized_method = payment_method.to_s.downcase.strip
+        normalized_method = "pos" if normalized_method.include?("pos")
+        normalized_method = "transfer" if normalized_method.include?("transfer")
+        @order.payments.create(payment_method: normalized_method, amount: final_total)
+      end
+
       Rails.logger.info ">>> SUCCESS: Order ##{@order.id} saved with phone: #{@order.phone} and #{@order.order_items.count} items."
       render json: { success: true, order_id: @order.id, message: "Order placed successfully!" }, status: :ok
     else
@@ -84,14 +98,30 @@ class OrdersController < ApplicationController
     combined_params = params.to_unsafe_h.deep_merge(json_body.is_a?(Hash) ? json_body : {})
     o_params = combined_params[:order].is_a?(Hash) ? combined_params[:order] : combined_params
 
+    old_total = @order.grand_total.to_f
     process_items_for_order(@order, o_params, combined_params, true)
+
+    if @out_of_stock_error.present?
+      render json: { success: false, errors: [@out_of_stock_error] }, status: :unprocessable_entity and return
+    end
 
     calculated_total = @order.order_items.sum { |item| item.price.to_f * item.quantity.to_f }
     supplied_total = (o_params[:grand_total] || combined_params[:grand_total] || 0).to_s.gsub(/[^\d.]/, '').to_f
     final_total = supplied_total > 0 ? supplied_total : calculated_total
+    
+    added_amount = final_total - old_total
+    new_payment_method = o_params[:new_payment_method].presence || o_params[:payment_method].presence || "cash"
 
     if @order.update(grand_total: final_total)
-      Rails.logger.info ">>> SUCCESS: Order ##{@order.id} successfully updated with appended items. New total: #{@order.grand_total}"
+      # Create payment record for newly appended items so disaggregation reflects POS/Transfer correctly
+      if added_amount > 0 && @order.respond_to?(:payments)
+        normalized_method = new_payment_method.to_s.downcase.strip
+        normalized_method = "pos" if normalized_method.include?("pos")
+        normalized_method = "transfer" if normalized_method.include?("transfer")
+        @order.payments.create(payment_method: normalized_method, amount: added_amount)
+      end
+
+      Rails.logger.info ">>> SUCCESS: Order ##{@order.id} successfully updated with appended items. Added ₦#{added_amount} via #{new_payment_method}. New total: #{@order.grand_total}"
       render json: { success: true, message: 'Order successfully updated with new items!', order_id: @order.id }, status: :ok
     else
       Rails.logger.error ">>> FAILED TO UPDATE ORDER APPEND: #{@order.errors.full_messages}"
@@ -105,7 +135,6 @@ class OrdersController < ApplicationController
 
   def update
     @order = Order.find(params[:id])
-
     json_body = {}
     begin
       if request.raw_post.present?
@@ -151,7 +180,23 @@ class OrdersController < ApplicationController
 
   private
 
+  def item_out_of_stock?(item_name)
+    return false unless item_name.present?
+    menu_item = MenuItem.find_by("lower(name) = ?", item_name.strip.downcase)
+    return false unless menu_item
+
+    if menu_item.respond_to?(:out_of_stock?) && menu_item.out_of_stock?
+      true
+    elsif menu_item.respond_to?(:status) && menu_item.status.to_s.downcase.include?("out")
+      true
+    else
+      false
+    end
+  end
+
   def process_items_for_order(order, o_params, combined_params, is_appended = false)
+    @out_of_stock_error = nil
+
     containers = o_params[:containers] || combined_params[:containers]
     if containers.present?
       containers_list = containers.is_a?(Hash) ? containers.values : containers
@@ -172,7 +217,12 @@ class OrdersController < ApplicationController
             item_name = item_attrs[:name] || item_attrs["name"]
             item_price = (item_attrs[:price] || item_attrs["price"] || 0).to_s.gsub(/[^\d.]/, '').to_f
             item_qty = (item_attrs[:qty] || item_attrs[:quantity] || item_attrs["qty"] || item_attrs["quantity"] || 1).to_i
+            
             if item_name.present? && item_qty > 0
+              if item_out_of_stock?(item_name)
+                @out_of_stock_error = "#{item_name} is currently out of stock."
+                next
+              end
               order.order_items.build(name: item_name, price: item_price, quantity: item_qty, is_appended: is_appended)
             end
           end
@@ -188,8 +238,12 @@ class OrdersController < ApplicationController
         item_name = item_attrs[:name] || item_attrs["name"]
         item_price = (item_attrs[:price] || item_attrs["price"] || 0).to_s.gsub(/[^\d.]/, '').to_f
         item_qty = (item_attrs[:qty] || item_attrs[:quantity] || item_attrs["qty"] || item_attrs["quantity"] || 1).to_i
+        
         if item_name.present? && item_qty > 0
-          # Intelligently preserve context: if the existing order is Takeaway/Delivery, ensure these items map cleanly under the order structure
+          if item_out_of_stock?(item_name)
+            @out_of_stock_error = "#{item_name} is currently out of stock."
+            next
+          end
           order.order_items.build(name: item_name, price: item_price, quantity: item_qty, is_appended: is_appended)
         end
       end
@@ -206,7 +260,12 @@ class OrdersController < ApplicationController
           item_name = item_attrs[:name] || item_attrs[:item_name] || item_attrs["name"] || item_attrs["item_name"]
           item_price = (item_attrs[:price] || item_attrs["price"] || 0).to_s.gsub(/[^\d.]/, '').to_f
           item_qty = (item_attrs[:quantity] || item_attrs[:qty] || item_attrs["quantity"] || item_attrs["qty"] || 1).to_i
+          
           if item_name.present?
+            if item_out_of_stock?(item_name)
+              @out_of_stock_error = "#{item_name} is currently out of stock."
+              next
+            end
             order.order_items.build(name: item_name, price: item_price, quantity: item_qty, is_appended: is_appended)
           end
         end

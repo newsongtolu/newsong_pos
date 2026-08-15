@@ -9,10 +9,14 @@ module Admin
       valid_statuses = ['completed', 'served', 'delivered', 'paid', 'verified', 'out_for_delivery', 'ready_for_dispatch']
       valid_orders = @orders.where('LOWER(status) IN (?)', valid_statuses.map(&:downcase))
       
+<<<<<<< HEAD
       # Fetch cancelled orders for the admin refund queue
+=======
+      # Fetch cancelled orders for the admin refund & cancellation queue
+>>>>>>> b748e60cfc88f71af3df100820f4a9deff4ed434
       @cancelled_orders = @orders.where('LOWER(status) = ?', 'cancelled').order(created_at: :desc)
 
-      # Payment method keywords
+      # Payment method keywords dictionary
       paystack_keys = ['paystack', 'paystack_link', 'online', 'card_payment', 'link', 'online_payment']
       cash_keys     = ['cash']
       pos_keys      = ['pos', 'card']
@@ -22,7 +26,7 @@ module Admin
       # Fetch all payments linked to valid orders (supporting multi-leg and add-on payments)
       valid_payments = Payment.where(order_id: valid_orders.select(:id))
 
-      # 1. Global Payment Method Breakdown (Powered by the payments table)
+      # 1. Global Payment Method Breakdown
       @total_cash     = valid_payments.where('LOWER(payment_method) IN (?)', cash_keys).sum(:amount)
       @total_pos      = valid_payments.where('LOWER(payment_method) IN (?)', pos_keys).sum(:amount)
       @total_transfer = valid_payments.where('LOWER(payment_method) IN (?) OR LOWER(payment_method) LIKE ?', transfer_keys, '%transfer%').sum(:amount)
@@ -34,7 +38,7 @@ module Admin
       delivery_col = ['delivery_fee', 'shipping_fee', 'fee'].find { |c| Order.column_names.include?(c) }
       @total_delivery_fees = delivery_col ? valid_orders.sum(delivery_col.to_sym) : 0
 
-      # 3. Granular Channel & Payment Disaggregation
+      # 3. Granular Channel & Payment Disaggregation Config
       channels_config = {
         'dining' => { 
           name: 'Dining', 
@@ -93,6 +97,10 @@ module Admin
           channel_data[:paystack] = matched_payments.where('(LOWER(payment_method) IN (?) OR LOWER(payment_method) LIKE ?) AND LOWER(payment_method) NOT LIKE ?', paystack_keys, '%paystack%', '%transfer%').sum(:amount)
           channel_data[:transfer] = matched_payments.where('LOWER(payment_method) IN (?) OR LOWER(payment_method) LIKE ?', transfer_keys, '%transfer%').sum(:amount)
         end
+<<<<<<< HEAD
+=======
+        
+>>>>>>> b748e60cfc88f71af3df100820f4a9deff4ed434
         @channel_metrics[slug] = channel_data
       end
 
@@ -102,8 +110,13 @@ module Admin
       @container_breakdown = container_records.any? ? container_records.group(:packaging_type).sum(:packaging_price) : {}
       @total_packaging_revenue = container_records.any? ? container_records.sum(:packaging_price) : 0
 
+<<<<<<< HEAD
       # Core Food Revenue (Gross Revenue minus Packaging and Delivery Fees)
       @core_food_revenue = @total_revenue - @total_packaging_revenue - @total_delivery_fees
+=======
+      # 5. Core Metrics Summary
+      @core_food_revenue      = @total_revenue - @total_packaging_revenue - @total_delivery_fees
+>>>>>>> b748e60cfc88f71af3df100820f4a9deff4ed434
       @completed_orders_count = valid_orders.count
     end
   end

@@ -10,6 +10,7 @@ class Order < ApplicationRecord
   
   before_validation :assign_defaults, on: :create
   before_save :calculate_grand_total
+  after_save :handle_payments
 
   # Scopes to separate Floor and Dispatch (handles spaces, underscores, and hyphens)
   scope :for_floor, -> { 
@@ -67,6 +68,31 @@ class Order < ApplicationRecord
     # If your database or form uses total_amount as an alias/column, keep this:
     if self.respond_to?(:total_amount=)
       self.total_amount = items_total
+    end
+  end
+
+  def handle_payments
+    current_total = grand_total.to_f
+    paid_total = payments.sum(:amount).to_f
+
+    # 1. If no payments exist yet, log the full amount under the chosen payment method (defaulting to cash)
+    if payments.empty? && current_total > 0
+      method = new_payment_method.presence || "cash"
+      payments.create!(amount: current_total, payment_method: method)
+      
+    # 2. If new items were added on the floor (increasing the total), record the difference separately
+    elsif current_total > paid_total
+      diff = current_total - paid_total
+      method = new_payment_method.presence || "transfer"
+      payments.create!(amount: diff, payment_method: method)
+      
+    # 3. If explicit split payment fields are passed
+    elsif split_method_1.present? && split_amount_1.to_f > 0
+      payments.destroy_all
+      payments.create!(amount: split_amount_1, payment_method: split_method_1)
+      if split_method_2.present? && split_amount_2.to_f > 0
+        payments.create!(amount: split_amount_2, payment_method: split_method_2)
+      end
     end
   end
 end

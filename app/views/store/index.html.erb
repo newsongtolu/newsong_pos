@@ -378,7 +378,7 @@
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
     </div>
     <div>
-      <p style="margin: 0; font-size: 0.85rem; font-weight: 600;">Order Cancelled</p>
+      <p style="margin: 0; font-size: 0.85rem; font-weight: 600;">Order Cancelled & Refund Queued</p>
       <p style="margin: 0; font-size: 0.75rem; color: #94a3b8;">Your order was successfully cancelled within the 1-minute window.</p>
     </div>
   </div>
@@ -622,101 +622,101 @@
     let pendingOrderData = null;
     let editingOrderId = null; // Tracks if we are editing an existing order
     
-    // Comprehensive Menu Data Catalog synced with backend seed records
+    // Comprehensive Menu Data Catalog synced with backend seed records & stock status
     const menuItems = [
-      { id: 1, name: "Student Budget Pack", category: "Special Packages", price: 1500, desc: "1 Scoop Party Jollof, 1 Fried Beef, 1 Boiled Egg, and 1 Free Pure Water." },
-      { id: 2, name: "The Bachelor's Comfort Pack", category: "Special Packages", price: 2200, desc: "1 Scoop Rice & Beans mix, 2 Fried Fish pieces, Fried Plantain, and Free Pure Water." },
-      { id: 3, name: "Oga At The Top Executive Combo", category: "Special Packages", price: 4500, desc: "Basmati Jollof, Fried Turkey lap, Moi-Moi, Cole-slaw, and Chilled Maltina." },
-      { id: 4, name: "Queen's Choice Swallow Pack", category: "Special Packages", price: 3200, desc: "2 Wraps of Pounded Yam, Egusi Soup with Shaki & Pomo, Beef chunk, and Bottled Water." },
-      { id: 5, name: "Amala Special Deluxe", category: "Special Packages", price: 2800, desc: "3 Wraps of Amala, Ewedu & Gbegiri soup mix, 2 Fried Beef chunks, and Pomo." },
-      { id: 6, name: "Ofada Heritage Feast", category: "Special Packages", price: 3500, desc: "Full portion of Ofada Rice with Ayamase designer sauce, Titus fish, and Boiled Egg." },
-      { id: 7, name: "Family Sunday Special", category: "Special Packages", price: 8500, desc: "Large party tray of Jollof & Fried rice mix, 4 Big Chicken pieces, and Dodo." },
-      { id: 8, name: "Quick Fix Yam & Egg Combo", category: "Special Packages", price: 2000, desc: "Fried Yam Slices (6 pcs), 2 Fried Eggs, pepper sauce, and Soda drink." },
-      { id: 9, name: "Healthy Fitness Pack", category: "Special Packages", price: 2800, desc: "Unripe Plantain Porridge, Croaker fish piece, and bottled table water." },
-      { id: 10, name: "The Midnight Munchies Pack", category: "Special Packages", price: 1800, desc: "Hot Ewa Agoyin beans, fried plantain, 2 pieces of Akara, and chilled Pepsi." },
+      { id: 1, name: "Student Budget Pack", category: "Special Packages", price: 1500, desc: "1 Scoop Party Jollof, 1 Fried Beef, 1 Boiled Egg, and 1 Free Pure Water.", in_stock: true },
+      { id: 2, name: "The Bachelor's Comfort Pack", category: "Special Packages", price: 2200, desc: "1 Scoop Rice & Beans mix, 2 Fried Fish pieces, Fried Plantain, and Free Pure Water.", in_stock: true },
+      { id: 3, name: "Oga At The Top Executive Combo", category: "Special Packages", price: 4500, desc: "Basmati Jollof, Fried Turkey lap, Moi-Moi, Cole-slaw, and Chilled Maltina.", in_stock: true },
+      { id: 4, name: "Queen's Choice Swallow Pack", category: "Special Packages", price: 3200, desc: "2 Wraps of Pounded Yam, Egusi Soup with Shaki & Pomo, Beef chunk, and Bottled Water.", in_stock: true },
+      { id: 5, name: "Amala Special Deluxe", category: "Special Packages", price: 2800, desc: "3 Wraps of Amala, Ewedu & Gbegiri soup mix, 2 Fried Beef chunks, and Pomo.", in_stock: true },
+      { id: 6, name: "Ofada Heritage Feast", category: "Special Packages", price: 3500, desc: "Full portion of Ofada Rice with Ayamase designer sauce, Titus fish, and Boiled Egg.", in_stock: true },
+      { id: 7, name: "Family Sunday Special", category: "Special Packages", price: 8500, desc: "Large party tray of Jollof & Fried rice mix, 4 Big Chicken pieces, and Dodo.", in_stock: true },
+      { id: 8, name: "Quick Fix Yam & Egg Combo", category: "Special Packages", price: 2000, desc: "Fried Yam Slices (6 pcs), 2 Fried Eggs, pepper sauce, and Soda drink.", in_stock: true },
+      { id: 9, name: "Healthy Fitness Pack", category: "Special Packages", price: 2800, desc: "Unripe Plantain Porridge, Croaker fish piece, and bottled table water.", in_stock: true },
+      { id: 10, name: "The Midnight Munchies Pack", category: "Special Packages", price: 1800, desc: "Hot Ewa Agoyin beans, fried plantain, 2 pieces of Akara, and chilled Pepsi.", in_stock: true },
       
-      { id: 11, name: "Party Jollof Rice (Per Scoop)", category: "Rice & Grains", price: 400, desc: "Smoky firewood-style party jollof rice cooked with rich local spices." },
-      { id: 12, name: "Fried Rice (Per Scoop)", category: "Rice & Grains", price: 450, desc: "Richly loaded fried rice with mixed vegetables and seasoning." },
-      { id: 13, name: "Ofada Rice (Per Scoop)", category: "Rice & Grains", price: 500, desc: "Unpolished native local rice served hot." },
-      { id: 14, name: "Coconut Rice (Per Scoop)", category: "Rice & Grains", price: 450, desc: "Sweet aroma coconut rice cooked in fresh coconut milk stock." },
-      { id: 15, name: "Native Jollof Rice (Per Scoop)", category: "Rice & Grains", price: 400, desc: "Traditional palm oil jollof rice loaded with locust beans and crayfish." },
-      { id: 16, name: "Special Mixed Rice & Beans (Per Scoop)", category: "Rice & Grains", price: 450, desc: "Combined portion of rice and honey beans." },
-      { id: 17, name: "Turmeric Spiced Rice (Per Scoop)", category: "Rice & Grains", price: 450, desc: "Fragrant yellow rice seasoned with aromatic herbs." },
-      { id: 18, name: "Basmati Party Jollof (Per Scoop)", category: "Rice & Grains", price: 600, desc: "Premium long-grain basmati rice cooked party style." },
-      { id: 19, name: "Basmati Fried Rice (Per Scoop)", category: "Rice & Grains", price: 650, desc: "Premium basmati fried rice with mixed veggies and liver." },
-      { id: 20, name: "Plain White Rice (Per Scoop)", category: "Rice & Grains", price: 300, desc: "Steam-cooked long grain white rice." },
+      { id: 11, name: "Party Jollof Rice (Per Scoop)", category: "Rice & Grains", price: 400, desc: "Smoky firewood-style party jollof rice cooked with rich local spices.", in_stock: true },
+      { id: 12, name: "Fried Rice (Per Scoop)", category: "Rice & Grains", price: 450, desc: "Richly loaded fried rice with mixed vegetables and seasoning.", in_stock: true },
+      { id: 13, name: "Ofada Rice (Per Scoop)", category: "Rice & Grains", price: 500, desc: "Unpolished native local rice served hot.", in_stock: true },
+      { id: 14, name: "Coconut Rice (Per Scoop)", category: "Rice & Grains", price: 450, desc: "Sweet aroma coconut rice cooked in fresh coconut milk stock.", in_stock: true },
+      { id: 15, name: "Native Jollof Rice (Per Scoop)", category: "Rice & Grains", price: 400, desc: "Traditional palm oil jollof rice loaded with locust beans and crayfish.", in_stock: true },
+      { id: 16, name: "Special Mixed Rice & Beans (Per Scoop)", category: "Rice & Grains", price: 450, desc: "Combined portion of rice and honey beans.", in_stock: true },
+      { id: 17, name: "Turmeric Spiced Rice (Per Scoop)", category: "Rice & Grains", price: 450, desc: "Fragrant yellow rice seasoned with aromatic herbs.", in_stock: true },
+      { id: 18, name: "Basmati Party Jollof (Per Scoop)", category: "Rice & Grains", price: 600, desc: "Premium long-grain basmati rice cooked party style.", in_stock: true },
+      { id: 19, name: "Basmati Fried Rice (Per Scoop)", category: "Rice & Grains", price: 650, desc: "Premium basmati fried rice with mixed veggies and liver.", in_stock: true },
+      { id: 20, name: "Plain White Rice (Per Scoop)", category: "Rice & Grains", price: 300, desc: "Steam-cooked long grain white rice.", in_stock: true },
       
-      { id: 21, name: "Honey Beans / Oloyin (Per Scoop)", category: "Beans", price: 400, desc: "Savory cooked brown beans with fish extract and palm oil." },
-      { id: 22, name: "Ewa Agoyin (Plain Beans, Per Scoop)", category: "Beans", price: 450, desc: "Well-mashed soft honey beans ready for sweet Agoyin sauce." },
-      { id: 23, name: "Brown Beans Porridge (Per Scoop)", category: "Beans", price: 400, desc: "Rich beans porridge cooked with onions and crayfish." },
-      { id: 24, name: "Stewed Beans & Corn (Adalu, Per Scoop)", category: "Beans", price: 500, desc: "Traditional sweet corn and beans medley." },
-      { id: 25, name: "Beans and Plantain Pottage (Per Scoop)", category: "Beans", price: 550, desc: "Hearty combination of beans and ripe plantain chunks." },
-      { id: 26, name: "Mashed Beans Special (Per Scoop)", category: "Beans", price: 450, desc: "Smooth seasoned bean puree." },
+      { id: 21, name: "Honey Beans / Oloyin (Per Scoop)", category: "Beans", price: 400, desc: "Savory cooked brown beans with fish extract and palm oil.", in_stock: true },
+      { id: 22, name: "Ewa Agoyin (Plain Beans, Per Scoop)", category: "Beans", price: 450, desc: "Well-mashed soft honey beans ready for sweet Agoyin sauce.", in_stock: true },
+      { id: 23, name: "Brown Beans Porridge (Per Scoop)", category: "Beans", price: 400, desc: "Rich beans porridge cooked with onions and crayfish.", in_stock: true },
+      { id: 24, name: "Stewed Beans & Corn (Adalu, Per Scoop)", category: "Beans", price: 500, desc: "Traditional sweet corn and beans medley.", in_stock: true },
+      { id: 25, name: "Beans and Plantain Pottage (Per Scoop)", category: "Beans", price: 550, desc: "Hearty combination of beans and ripe plantain chunks.", in_stock: true },
+      { id: 26, name: "Mashed Beans Special (Per Scoop)", category: "Beans", price: 450, desc: "Smooth seasoned bean puree.", in_stock: true },
       
-      { id: 27, name: "Amala (Per Wrap)", category: "Solids (Swallow)", price: 300, desc: "Smooth, dark-brown yam flour swallow." },
-      { id: 28, name: "Pounded Yam (Per Wrap)", category: "Solids (Swallow)", price: 500, desc: "Classic pounded yam made from fresh tubers." },
-      { id: 29, name: "Yellow Garri / Eba (Per Wrap)", category: "Solids (Swallow)", price: 300, desc: "Golden yellow garri swallow prepared with boiling water." },
-      { id: 30, name: "White Garri / Eba (Per Wrap)", category: "Solids (Swallow)", price: 300, desc: "White garri swallow." },
-      { id: 31, name: "Semovita / Semo (Per Wrap)", category: "Solids (Swallow)", price: 400, desc: "Smooth wheat-based swallow option." },
-      { id: 32, name: "Wheat Meal (Per Wrap)", category: "Solids (Swallow)", price: 400, desc: "Nutritious brown wheat swallow." },
-      { id: 33, name: "Fufu / Akpu (Per Wrap)", category: "Solids (Swallow)", price: 300, desc: "Traditional fermented cassava swallow." },
-      { id: 34, name: "Oat Meal Swallow (Per Wrap)", category: "Solids (Swallow)", price: 500, desc: "Healthy fiber-rich oat swallow." },
-      { id: 35, name: "Cassava Starch / Usi (Per Wrap)", category: "Solids (Swallow)", price: 600, desc: "Traditional yellowish oil-cured starch swallow." },
-      { id: 36, name: "Plantain Flour Swallow (Elubo Ogede, Per Wrap)", category: "Solids (Swallow)", price: 450, desc: "Special dietary green plantain swallow." },
+      { id: 27, name: "Amala (Per Wrap)", category: "Solids (Swallow)", price: 300, desc: "Smooth, dark-brown yam flour swallow.", in_stock: true },
+      { id: 28, name: "Pounded Yam (Per Wrap)", category: "Solids (Swallow)", price: 500, desc: "Classic pounded yam made from fresh tubers.", in_stock: true },
+      { id: 29, name: "Yellow Garri / Eba (Per Wrap)", category: "Solids (Swallow)", price: 300, desc: "Golden yellow garri swallow prepared with boiling water.", in_stock: true },
+      { id: 30, name: "White Garri / Eba (Per Wrap)", category: "Solids (Swallow)", price: 300, desc: "White garri swallow.", in_stock: true },
+      { id: 31, name: "Semovita / Semo (Per Wrap)", category: "Solids (Swallow)", price: 400, desc: "Smooth wheat-based swallow option.", in_stock: true },
+      { id: 32, name: "Wheat Meal (Per Wrap)", category: "Solids (Swallow)", price: 400, desc: "Nutritious brown wheat swallow.", in_stock: true },
+      { id: 33, name: "Fufu / Akpu (Per Wrap)", category: "Solids (Swallow)", price: 300, desc: "Traditional fermented cassava swallow.", in_stock: true },
+      { id: 34, name: "Oat Meal Swallow (Per Wrap)", category: "Solids (Swallow)", price: 500, desc: "Healthy fiber-rich oat swallow.", in_stock: true },
+      { id: 35, name: "Cassava Starch / Usi (Per Wrap)", category: "Solids (Swallow)", price: 600, desc: "Traditional yellowish oil-cured starch swallow.", in_stock: true },
+      { id: 36, name: "Plantain Flour Swallow (Elubo Ogede, Per Wrap)", category: "Solids (Swallow)", price: 450, desc: "Special dietary green plantain swallow.", in_stock: true },
       
-      { id: 37, name: "Egusi Soup (Per Scoop)", category: "Stew & Soup", price: 600, desc: "Rich melon seed soup cooked with stockfish and palm oil." },
-      { id: 38, name: "Ewedu Soup (Per Scoop)", category: "Stew & Soup", price: 300, desc: "Freshly blended green slimy ewedu leaves." },
-      { id: 39, name: "Gbegiri Soup (Per Scoop)", category: "Stew & Soup", price: 300, desc: "Smooth mashed brown beans soup." },
-      { id: 40, name: "Ewedu & Gbegiri Combined (Per Scoop)", category: "Stew & Soup", price: 500, desc: "The classic Lagos-style combo soup base." },
-      { id: 41, name: "Ayamase / Designer Stew (Per Scoop)", category: "Stew & Soup", price: 700, desc: "Hot bleached palm oil green pepper sauce with locust beans." },
-      { id: 42, name: "Buka Red Tomato Stew (Per Scoop)", category: "Stew & Soup", price: 500, desc: "Classic local peppery tomato stew base." },
-      { id: 43, name: "Efo Riro Vegetable Soup (Per Scoop)", category: "Stew & Soup", price: 650, desc: "Deeply nutritious spinach soup loaded with locust beans and crayfish." },
-      { id: 44, name: "Ogbono Soup (Per Scoop)", category: "Stew & Soup", price: 600, desc: "Draw seed soup cooked with savory stock." },
-      { id: 45, name: "Oha Soup (Per Scoop)", category: "Stew & Soup", price: 700, desc: "Traditional Eastern aromatic oha leaf soup." },
-      { id: 46, name: "Fisherman Seafood Soup (Per Scoop)", category: "Stew & Soup", price: 1000, desc: "Rich coastal fish and seafood infused soup." },
+      { id: 37, name: "Egusi Soup (Per Scoop)", category: "Stew & Soup", price: 600, desc: "Rich melon seed soup cooked with stockfish and palm oil.", in_stock: true },
+      { id: 38, name: "Ewedu Soup (Per Scoop)", category: "Stew & Soup", price: 300, desc: "Freshly blended green slimy ewedu leaves.", in_stock: true },
+      { id: 39, name: "Gbegiri Soup (Per Scoop)", category: "Stew & Soup", price: 300, desc: "Smooth mashed brown beans soup.", in_stock: true },
+      { id: 40, name: "Ewedu & Gbegiri Combined (Per Scoop)", category: "Stew & Soup", price: 500, desc: "The classic Lagos-style combo soup base.", in_stock: true },
+      { id: 41, name: "Ayamase / Designer Stew (Per Scoop)", category: "Stew & Soup", price: 700, desc: "Hot bleached palm oil green pepper sauce with locust beans.", in_stock: true },
+      { id: 42, name: "Buka Red Tomato Stew (Per Scoop)", category: "Stew & Soup", price: 500, desc: "Classic local peppery tomato stew base.", in_stock: true },
+      { id: 43, name: "Efo Riro Vegetable Soup (Per Scoop)", category: "Stew & Soup", price: 650, desc: "Deeply nutritious spinach soup loaded with locust beans and crayfish.", in_stock: true },
+      { id: 44, name: "Ogbono Soup (Per Scoop)", category: "Stew & Soup", price: 600, desc: "Draw seed soup cooked with savory stock.", in_stock: true },
+      { id: 45, name: "Oha Soup (Per Scoop)", category: "Stew & Soup", price: 700, desc: "Traditional Eastern aromatic oha leaf soup.", in_stock: true },
+      { id: 46, name: "Fisherman Seafood Soup (Per Scoop)", category: "Stew & Soup", price: 1000, desc: "Rich coastal fish and seafood infused soup.", in_stock: true },
       
-      { id: 47, name: "Native Yam Porridge / Asaro (Per Scoop)", category: "Yam", price: 600, desc: "Soft tuber yam cooked down in rich pepper mix and palm oil." },
-      { id: 48, name: "Fried Yam Slices (3 Pieces)", category: "Yam", price: 400, desc: "Crispy golden fried yam chunks." },
-      { id: 49, name: "Boiled Tuber Yam (Per Slice)", category: "Yam", price: 300, desc: "Soft boiled white yam slice." },
-      { id: 50, name: "Sweet Potato Porridge (Per Scoop)", category: "Yam", price: 500, desc: "Savory orange sweet potato pottage." },
-      { id: 51, name: "Boiled Sweet Potato (Per Slice)", category: "Yam", price: 300, desc: "Tender boiled sweet potato." },
-      { id: 52, name: "Unripe Plantain Porridge (Per Scoop)", category: "Yam", price: 600, desc: "Healthy iron-rich unripe plantain pottage." },
-      { id: 53, name: "Ripe Plantain Porridge (Per Scoop)", category: "Yam", price: 550, desc: "Sweet ripe plantain pottage." },
-      { id: 54, name: "Yam and Plantain Mixed Porridge (Per Scoop)", category: "Yam", price: 650, desc: "Combined yam and plantain pottage." },
-      { id: 55, name: "Roasted Yam Slice (Per Piece)", category: "Yam", price: 300, desc: "Coal-roasted local yam slice." },
-      { id: 56, name: "Cocoyam Porridge / Esuru (Per Scoop)", category: "Yam", price: 500, desc: "Traditional savory cocoyam pottage." },
+      { id: 47, name: "Native Yam Porridge / Asaro (Per Scoop)", category: "Yam", price: 600, desc: "Soft tuber yam cooked down in rich pepper mix and palm oil.", in_stock: true },
+      { id: 48, name: "Fried Yam Slices (3 Pieces)", category: "Yam", price: 400, desc: "Crispy golden fried yam chunks.", in_stock: true },
+      { id: 49, name: "Boiled Tuber Yam (Per Slice)", category: "Yam", price: 300, desc: "Soft boiled white yam slice.", in_stock: true },
+      { id: 50, name: "Sweet Potato Porridge (Per Scoop)", category: "Yam", price: 500, desc: "Savory orange sweet potato pottage.", in_stock: true },
+      { id: 51, name: "Boiled Sweet Potato (Per Slice)", category: "Yam", price: 300, desc: "Tender boiled sweet potato.", in_stock: true },
+      { id: 52, name: "Unripe Plantain Porridge (Per Scoop)", category: "Yam", price: 600, desc: "Healthy iron-rich unripe plantain pottage.", in_stock: true },
+      { id: 53, name: "Ripe Plantain Porridge (Per Scoop)", category: "Yam", price: 550, desc: "Sweet ripe plantain pottage.", in_stock: true },
+      { id: 54, name: "Yam and Plantain Mixed Porridge (Per Scoop)", category: "Yam", price: 650, desc: "Combined yam and plantain pottage.", in_stock: true },
+      { id: 55, name: "Roasted Yam Slice (Per Piece)", category: "Yam", price: 300, desc: "Coal-roasted local yam slice.", in_stock: true },
+      { id: 56, name: "Cocoyam Porridge / Esuru (Per Scoop)", category: "Yam", price: 500, desc: "Traditional savory cocoyam pottage.", in_stock: true },
       
-      { id: 57, name: "Fried Beef (Per Piece)", category: "Extras & Proteins", price: 500, desc: "Tender seasoned beef chunk, well fried." },
-      { id: 58, name: "Fried Chicken (Per Piece - Lap/Breast)", category: "Extras & Proteins", price: 1500, desc: "Big golden-fried chicken piece." },
-      { id: 59, name: "Fried Turkey (Per Piece)", category: "Extras & Proteins", price: 2000, desc: "Juicy seasoned turkey piece." },
-      { id: 60, name: "Titus Fish (Fried, Per Piece)", category: "Extras & Proteins", price: 1000, desc: "Whole juicy fried Titus fish portion." },
-      { id: 61, name: "Croaker Fish (Fried, Per Piece)", category: "Extras & Proteins", price: 1800, desc: "Premium croaker fish piece." },
-      { id: 62, name: "Stockfish / Panla (Per Piece)", category: "Extras & Proteins", price: 800, desc: "Flavorful seasoned stockfish piece." },
-      { id: 63, name: "Cow Skin / Pomo (Big Size, Per Piece)", category: "Extras & Proteins", price: 300, desc: "Soft cooked cow skin." },
-      { id: 64, name: "Cow Tripe / Shaki (Per Scoop)", category: "Extras & Proteins", price: 600, desc: "Tender diced cow tripe." },
-      { id: 65, name: "Cow Foot (Per Piece)", category: "Extras & Proteins", price: 1000, desc: "Soft gelatinous cow foot piece." },
-      { id: 66, name: "Fried Plantain / Dodo (5 Slices)", category: "Extras & Proteins", price: 400, desc: "Sweet ripe plantain slices fried golden." },
-      { id: 67, name: "Boiled Egg (Per Piece)", category: "Extras & Proteins", price: 300, desc: "Hard-boiled fresh egg." },
-      { id: 68, name: "Moi-Moi (Per Wrap)", category: "Extras & Proteins", price: 500, desc: "Steamed blended bean pudding." },
-      { id: 69, name: "Akara (Bean Cake, 3 Pieces)", category: "Extras & Proteins", price: 300, desc: "Freshly fried hot bean fritters." },
-      { id: 70, name: "Asun (Spiced Diced Goat Meat, Per Scoop)", category: "Extras & Proteins", price: 1200, desc: "Peppered smoky chopped goat meat." },
-      { id: 71, name: "Peppered Snail (Per Piece)", category: "Extras & Proteins", price: 1500, desc: "Juicy giant snail in spicy pepper sauce." },
+      { id: 57, name: "Fried Beef (Per Piece)", category: "Extras & Proteins", price: 500, desc: "Tender seasoned beef chunk, well fried.", in_stock: true },
+      { id: 58, name: "Fried Chicken (Per Piece - Lap/Breast)", category: "Extras & Proteins", price: 1500, desc: "Big golden-fried chicken piece.", in_stock: true },
+      { id: 59, name: "Fried Turkey (Per Piece)", category: "Extras & Proteins", price: 2000, desc: "Juicy seasoned turkey piece.", in_stock: true },
+      { id: 60, name: "Titus Fish (Fried, Per Piece)", category: "Extras & Proteins", price: 1000, desc: "Whole juicy fried Titus fish portion.", in_stock: true },
+      { id: 61, name: "Croaker Fish (Fried, Per Piece)", category: "Extras & Proteins", price: 1800, desc: "Premium croaker fish piece.", in_stock: true },
+      { id: 62, name: "Stockfish / Panla (Per Piece)", category: "Extras & Proteins", price: 800, desc: "Flavorful seasoned stockfish piece.", in_stock: true },
+      { id: 63, name: "Cow Skin / Pomo (Big Size, Per Piece)", category: "Extras & Proteins", price: 300, desc: "Soft cooked cow skin.", in_stock: true },
+      { id: 64, name: "Cow Tripe / Shaki (Per Scoop)", category: "Extras & Proteins", price: 600, desc: "Tender diced cow tripe.", in_stock: true },
+      { id: 65, name: "Cow Foot (Per Piece)", category: "Extras & Proteins", price: 1000, desc: "Soft gelatinous cow foot piece.", in_stock: true },
+      { id: 66, name: "Fried Plantain / Dodo (5 Slices)", category: "Extras & Proteins", price: 400, desc: "Sweet ripe plantain slices fried golden.", in_stock: true },
+      { id: 67, name: "Boiled Egg (Per Piece)", category: "Extras & Proteins", price: 300, desc: "Hard-boiled fresh egg.", in_stock: true },
+      { id: 68, name: "Moi-Moi (Per Wrap)", category: "Extras & Proteins", price: 500, desc: "Steamed blended bean pudding.", in_stock: true },
+      { id: 69, name: "Akara (Bean Cake, 3 Pieces)", category: "Extras & Proteins", price: 300, desc: "Freshly fried hot bean fritters.", in_stock: true },
+      { id: 70, name: "Asun (Spiced Diced Goat Meat, Per Scoop)", category: "Extras & Proteins", price: 1200, desc: "Peppered smoky chopped goat meat.", in_stock: true },
+      { id: 71, name: "Peppered Snail (Per Piece)", category: "Extras & Proteins", price: 1500, desc: "Juicy giant snail in spicy pepper sauce.", in_stock: true },
       
-      { id: 72, name: "Pure Water Sachet", category: "Drinks", price: 0, desc: "Clean, chilled sachet water. Absolutely free for all customers!" },
-      { id: 73, name: "Bottled Table Water (75cl)", category: "Drinks", price: 300, desc: "Chilled bottled table water." },
-      { id: 74, name: "Chilled Pepsi (50cl Pet Bottle)", category: "Drinks", price: 400, desc: "Cold 50cl bottle soda." },
-      { id: 75, name: "Chilled Coca-Cola (50cl Pet Bottle)", category: "Drinks", price: 400, desc: "Cold 50cl bottle soda." },
-      { id: 76, name: "Chilled Sprite (50cl Pet Bottle)", category: "Drinks", price: 400, desc: "Cold 50cl bottle soda." },
-      { id: 77, name: "Fanta (50cl Pet Bottle)", category: "Drinks", price: 400, desc: "Cold 50cl bottle soda." },
-      { id: 78, name: "Maltina Can (330ml)", category: "Drinks", price: 600, desc: "Chilled nourishing malt beverage." },
-      { id: 79, name: "Amstel Malta Can (330ml)", category: "Drinks", price: 600, desc: "Chilled premium malt drink." },
-      { id: 80, name: "Fayrouz Pear Drink (Can)", category: "Drinks", price: 600, desc: "Sparkling non-alcoholic pear drink." },
-      { id: 81, name: "Bigi Cola (50cl Pet Bottle)", category: "Drinks", price: 300, desc: "Chilled Bigi cola soda." },
-      { id: 82, name: "Bigi Apple / Tropical (50cl)", category: "Drinks", price: 300, desc: "Chilled fruit flavored soda." },
-      { id: 83, name: "Fearless Energy Drink (Can)", category: "Drinks", price: 700, desc: "Revitalizing energy drink." },
-      { id: 84, name: "Hollandia Yoghurt (500ml)", category: "Drinks", price: 1200, desc: "Rich creamy fruit yoghurt." },
-      { id: 85, name: "Chivita 100% Juice Pack", category: "Drinks", price: 1000, desc: "Fresh fruit juice pack." },
-      { id: 86, name: "Chapman Cocktail (Plastic Cup)", category: "Drinks", price: 800, desc: "Refreshing local signature cocktail drink." }
+      { id: 72, name: "Pure Water Sachet", category: "Drinks", price: 0, desc: "Clean, chilled sachet water. Absolutely free for all customers!", in_stock: true },
+      { id: 73, name: "Bottled Table Water (75cl)", category: "Drinks", price: 300, desc: "Chilled bottled table water.", in_stock: true },
+      { id: 74, name: "Chilled Pepsi (50cl Pet Bottle)", category: "Drinks", price: 400, desc: "Cold 50cl bottle soda.", in_stock: true },
+      { id: 75, name: "Chilled Coca-Cola (50cl Pet Bottle)", category: "Drinks", price: 400, desc: "Cold 50cl bottle soda.", in_stock: true },
+      { id: 76, name: "Chilled Sprite (50cl Pet Bottle)", category: "Drinks", price: 400, desc: "Cold 50cl bottle soda.", in_stock: true },
+      { id: 77, name: "Fanta (50cl Pet Bottle)", category: "Drinks", price: 400, desc: "Cold 50cl bottle soda.", in_stock: true },
+      { id: 78, name: "Maltina Can (330ml)", category: "Drinks", price: 600, desc: "Chilled nourishing malt beverage.", in_stock: true },
+      { id: 79, name: "Amstel Malta Can (330ml)", category: "Drinks", price: 600, desc: "Chilled premium malt drink.", in_stock: true },
+      { id: 80, name: "Fayrouz Pear Drink (Can)", category: "Drinks", price: 600, desc: "Sparkling non-alcoholic pear drink.", in_stock: true },
+      { id: 81, name: "Bigi Cola (50cl Pet Bottle)", category: "Drinks", price: 300, desc: "Chilled Bigi cola soda.", in_stock: true },
+      { id: 82, name: "Bigi Apple / Tropical (50cl)", category: "Drinks", price: 300, desc: "Chilled fruit flavored soda.", in_stock: true },
+      { id: 83, name: "Fearless Energy Drink (Can)", category: "Drinks", price: 700, desc: "Revitalizing energy drink.", in_stock: true },
+      { id: 84, name: "Hollandia Yoghurt (500ml)", category: "Drinks", price: 1200, desc: "Rich creamy fruit yoghurt.", in_stock: true },
+      { id: 85, name: "Chivita 100% Juice Pack", category: "Drinks", price: 1000, desc: "Fresh fruit juice pack.", in_stock: true },
+      { id: 86, name: "Chapman Cocktail (Plastic Cup)", category: "Drinks", price: 800, desc: "Refreshing local signature cocktail drink.", in_stock: true }
     ];
     
     function renderMenu() {
@@ -730,11 +730,17 @@
         card.dataset.id = item.id;
         card.dataset.name = item.name;
         card.dataset.price = item.price;
+        card.dataset.inStock = item.in_stock;
+        
         const formattedPrice = `₦${item.price.toLocaleString()}`;
+        const stockBadge = item.in_stock 
+          ? '' 
+          : `<span style="font-size: 0.6rem; background: rgba(239, 68, 68, 0.2); color: #ef4444; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px; border: 1px solid rgba(239, 68, 68, 0.4);">OUT OF STOCK</span>`;
+        
         card.innerHTML = `
           <div>
             <div class="menu-header">
-              <h3 class="menu-title">${item.name}</h3>
+              <h3 class="menu-title">${item.name} ${stockBadge}</h3>
               <span class="menu-cat">${item.category}</span>
             </div>
             <p class="menu-desc">${item.desc}</p>
@@ -744,7 +750,7 @@
             <div class="stepper">
               <button class="step-btn decrease">-</button>
               <span class="step-count">0</span>
-              <button class="step-btn increase">+</button>
+              <button class="step-btn increase" ${!item.in_stock ? 'style="opacity: 0.5; cursor: not-allowed;"' : ''}>+</button>
             </div>
           </div>
         `;
@@ -905,6 +911,7 @@
         const name = card.dataset.name;
         const price = parseFloat(card.dataset.price);
         const category = card.dataset.category;
+        const inStock = card.dataset.inStock === 'true';
         
         const countSpan = card.querySelector('.step-count');
         const incBtn = card.querySelector('.increase');
@@ -916,6 +923,12 @@
         decBtn.parentNode.replaceChild(newDec, decBtn);
         
         newInc.addEventListener('click', () => {
+          // Issue 1: Blocking Out-of-Stock Items at Checkout validation check
+          if (!inStock) {
+            showFriendlyNotice(`Sorry! "${name}" has been marked as out of stock by management.`);
+            return;
+          }
+
           const needsContainers = (currentServiceMode === 'Online Takeaway' || currentServiceMode === 'Physical Takeaway' || currentServiceMode === 'Home Delivery');
           
           if (needsContainers) {
@@ -1137,8 +1150,8 @@
       if (!listContainer || !emptyMsg || !activeContent) return;
       
       if (editingOrderId) {
-        if (modalHeaderTitle) modalHeaderTitle.textContent = `Edit Order #${editingOrderId} & Add Items`;
-        if (cartFormSection) cartFormSection.style.display = 'none';
+        if (modalHeaderTitle) modalHeaderTitle.textContent = `Edit Order #${editingOrderId} & Append Items`;
+        if (cartFormSection) cartFormSection.style.display = 'block'; // Allow selecting new payment method for appended amounts
       } else {
         if (modalHeaderTitle) modalHeaderTitle.textContent = 'Order Tray & Checkout';
         if (cartFormSection) cartFormSection.style.display = 'block';
@@ -1163,7 +1176,7 @@
             const row = document.createElement('div');
             row.className = 'cart-container-row';
             row.innerHTML = `
-              <div style="font-weight: bold; color: var(--brand-bottom);">Container #${index + 1} (${c.packaging})</div>
+              <div style="font-weight: bold; color: var(--brand-bottom);">Container #${index + 1} (${c.packaging}) ${editingOrderId ? '<span style="font-size:0.65rem; background:#3b82f6; color:#fff; padding:2px 4px; border-radius:3px;">Appended Item</span>' : ''}</div>
               <div style="font-size: 0.75rem; color: var(--text-muted);">${itemStrs}</div>
               <div style="display: flex; justify-content: space-between; margin-top: 4px; font-weight: 600;">
                 <span>Container Subtotal + Pack</span>
@@ -1181,7 +1194,7 @@
             row.className = 'cart-container-row';
             row.innerHTML = `
               <div style="display: flex; justify-content: space-between;">
-                <span>${item.name} (x${item.qty})</span>
+                <span>${item.name} (x${item.qty}) ${editingOrderId ? '<span style="font-size:0.65rem; background:#3b82f6; color:#fff; padding:2px 4px; border-radius:3px;">Appended Item</span>' : ''}</span>
                 <span style="font-weight: bold; color: var(--brand-bottom);">₦${(item.price * item.qty).toLocaleString()}</span>
               </div>
             `;
@@ -1214,7 +1227,7 @@
           paymentSelect.innerHTML = `
             <option value="Cash">Cash</option>
             <option value="Bank Transfer">Bank Transfer</option>
-            <option value="POS">POS</option>
+            <option value="POS">POS (Explicitly Log Appended Amount)</option>
             <option value="Split Payment">Split Payment</option>
           `;
         } else {
@@ -1241,16 +1254,18 @@
       let paymentMethod = 'Cash';
       let address = '';
       
+      const nameEl = document.getElementById('cust-name');
+      const phoneEl = document.getElementById('cust-phone');
+      const emailEl = document.getElementById('cust-email');
+      const paymentEl = document.getElementById('payment-method');
+      const addressEl = document.getElementById('cust-address');
+      
+      paymentMethod = paymentEl ? paymentEl.value : 'Cash';
+
       if (!editingOrderId) {
-        const nameEl = document.getElementById('cust-name');
-        const phoneEl = document.getElementById('cust-phone');
-        const emailEl = document.getElementById('cust-email');
-        const paymentEl = document.getElementById('payment-method');
-        const addressEl = document.getElementById('cust-address');
         name = nameEl ? nameEl.value.trim() : '';
         phone = phoneEl ? phoneEl.value.trim() : '';
         email = emailEl ? emailEl.value.trim() : '';
-        paymentMethod = paymentEl ? paymentEl.value : 'Cash';
         const isRemoteOrDelivery = (currentServiceMode === 'Home Delivery' || currentServiceMode === 'Online Takeaway');
         address = (isRemoteOrDelivery && addressEl) ? addressEl.value.trim() : '';
         
@@ -1271,8 +1286,8 @@
           return;
         }
       } else {
-        name = 'Existing Customer (Order #' + editingOrderId + ')';
-        phone = '00000000000';
+        name = nameEl && nameEl.value.trim() ? nameEl.value.trim() : ('Existing Customer (Order #' + editingOrderId + ')');
+        phone = phoneEl && phoneEl.value.trim() ? phoneEl.value.trim() : '08000000000';
       }
       
       const grandTotalEl = document.getElementById('modal-grand-total');
@@ -1292,7 +1307,9 @@
           email: email,
           service_mode: currentServiceMode,
           fulfillment_type: currentServiceMode,
-          payment_method: paymentMethod,
+          payment_method: paymentMethod, // Issue 2: Explicitly logged incremental payment channel for appended items
+          appended_payment_method: paymentMethod,
+          is_appended_order: editingOrderId ? true : false,
           delivery_address: address,
           subtotal: subtotalVal,
           delivery_fee: deliveryFeeVal,
@@ -1356,7 +1373,7 @@
       return `
         <div style="text-align: center; border-bottom: 2px dashed var(--border-color); padding-bottom: 12px; margin-bottom: 12px;">
           <h2 style="margin: 0; color: var(--brand-bottom); font-size: 1.1rem;">Newsong Cookitz House</h2>
-          <p style="margin: 2px 0; font-size: 0.75rem; color: var(--text-muted);">Smart Container POS Receipt</p>
+          <p style="margin: 2px 0; font-size: 0.75rem; color: var(--text-muted);">Smart Container POS Receipt ${order.is_appended_order ? '(Appended Order)' : ''}</p>
           <p style="margin: 2px 0; font-size: 0.75rem;">Order ID: <strong>${order.order_id}</strong></p>
           <p style="margin: 2px 0; font-size: 0.75rem;">Date: ${new Date().toLocaleString()}</p>
         </div>
@@ -1365,7 +1382,7 @@
           <p style="margin: 2px 0;"><strong>Phone:</strong> ${order.phone}</p>
           <p style="margin: 2px 0;"><strong>Service Mode:</strong> ${order.service_mode}</p>
           ${order.delivery_address ? `<p style="margin: 2px 0;"><strong>Address:</strong> ${order.delivery_address}</p>` : ''}
-          <p style="margin: 2px 0;"><strong>Payment:</strong> ${order.payment_method}</p>
+          <p style="margin: 2px 0;"><strong>Payment Method:</strong> ${order.payment_method}</p>
         </div>
         <div style="border-top: 1px dashed var(--border-color); border-bottom: 1px dashed var(--border-color); padding: 8px 0; margin-bottom: 10px;">
           <div style="font-weight: bold; margin-bottom: 4px; font-size: 0.75rem; text-transform: uppercase;">Order Breakdown</div>
@@ -1433,7 +1450,7 @@
     
     function sendOrderToBackend(orderData) {
       const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-      const endpoint = editingOrderId ? `/cashier/orders/${editingOrderId}` : '/orders';
+      const endpoint = editingOrderId ? `/cashier/orders/${editingOrderId}/append_item` : '/orders';
       const method = editingOrderId ? 'PATCH' : 'POST';
       
       fetch(endpoint, {
@@ -1477,8 +1494,31 @@
       if (whatsappBtn) whatsappBtn.classList.remove('lifted');
       if (receiptModal) receiptModal.style.display = 'none';
       orderCanBeCancelled = false;
-      pendingOrderData = null; 
       
+      // Issue 3: Populating the Cancelled Orders & Refund Queue payload dispatch
+      if (pendingOrderData && pendingOrderData.order) {
+        const cancelPayload = {
+          order_id: pendingOrderData.order.order_id,
+          status: 'cancelled_within_window',
+          flag_refund: true,
+          refund_amount: pendingOrderData.order.grand_total,
+          customer_name: pendingOrderData.order.customer_name,
+          phone: pendingOrderData.order.phone
+        };
+        
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+        fetch(`/orders/${pendingOrderData.order.order_id}/cancel`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {})
+          },
+          body: JSON.stringify(cancelPayload)
+        }).catch(err => console.error('Error flagging cancellation queue:', err));
+      }
+      
+      pendingOrderData = null; 
       showCancelToast();
     }
     
