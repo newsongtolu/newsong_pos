@@ -4,10 +4,13 @@ module Admin
 
     def index
       @orders = Order.all
-
-      # Define successfully fulfilled / paid order states
+      
+      # Define successfully fulfilled / paid order states (Cancelled is intentionally excluded)
       valid_statuses = ['completed', 'served', 'delivered', 'paid', 'verified', 'out_for_delivery', 'ready_for_dispatch']
       valid_orders = @orders.where('LOWER(status) IN (?)', valid_statuses.map(&:downcase))
+      
+      # Fetch cancelled orders for the admin refund queue
+      @cancelled_orders = @orders.where('LOWER(status) = ?', 'cancelled').order(created_at: :desc)
 
       # Payment method keywords
       paystack_keys = ['paystack', 'paystack_link', 'online', 'card_payment', 'link', 'online_payment']
@@ -75,7 +78,6 @@ module Admin
         
         scope_count = matched_orders.size
         scope_revenue = matched_payments.sum(:amount)
-
         channel_data = {
           name: cfg[:name],
           count: scope_count,
@@ -91,7 +93,6 @@ module Admin
           channel_data[:paystack] = matched_payments.where('(LOWER(payment_method) IN (?) OR LOWER(payment_method) LIKE ?) AND LOWER(payment_method) NOT LIKE ?', paystack_keys, '%paystack%', '%transfer%').sum(:amount)
           channel_data[:transfer] = matched_payments.where('LOWER(payment_method) IN (?) OR LOWER(payment_method) LIKE ?', transfer_keys, '%transfer%').sum(:amount)
         end
-
         @channel_metrics[slug] = channel_data
       end
 
@@ -103,7 +104,6 @@ module Admin
 
       # Core Food Revenue (Gross Revenue minus Packaging and Delivery Fees)
       @core_food_revenue = @total_revenue - @total_packaging_revenue - @total_delivery_fees
-
       @completed_orders_count = valid_orders.count
     end
   end

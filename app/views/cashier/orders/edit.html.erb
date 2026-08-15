@@ -8,7 +8,7 @@
     <p class="text-xs text-slate-400">Review customer details, modify item quantities, or add new items to this order.</p>
   </div>
   
-  <%= form_with model: @order, html: { data: { fulfillment_type: @order.fulfillment_type, service_mode: @order.service_mode } } do |f| %>
+  <%= form_with model: [:cashier, @order], html: { data: { fulfillment_type: @order.fulfillment_type, service_mode: @order.service_mode } } do |f| %>
     <!-- CUSTOMER INFO CARD (Read-Only) -->
     <div class="bg-[#1e293b] p-5 rounded-2xl border border-slate-700/80 shadow-xl grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div>
@@ -32,19 +32,19 @@
         
         <div class="divide-y divide-slate-700/60 bg-[#0f172a] rounded-xl border border-slate-700 overflow-hidden">
           <%= f.fields_for :order_items, @order.order_items.where(is_appended: [false, nil]) do |item_form| %>
-            <div class="p-3.5 flex items-center justify-between gap-4">
+            <div class="p-3.5 flex items-center justify-between gap-4 order-item-row" data-price="<%= item_form.object.price || item_form.object.menu_item&.price || 0 %>">
               <div class="flex-1">
                 <span class="block text-sm font-bold text-white"><%= item_form.object.name || item_form.object.menu_item&.name || "Menu Item" %></span>
-                <span class="text-xs text-emerald-400 font-semibold">₦<%= number_with_delimiter(item_form.object.price || item_form.object.menu_item&.price || 0) %> each</span>
+                <span class="text-xs text-emerald-400 font-semibold item-unit-price" data-price="<%= item_form.object.price || item_form.object.menu_item&.price || 0 %>">₦<%= number_with_delimiter(item_form.object.price || item_form.object.menu_item&.price || 0) %> each</span>
               </div>
               <div class="flex items-center gap-3">
                 <div class="flex items-center gap-1.5">
                   <span class="text-[10px] text-slate-400 uppercase font-bold">Qty:</span>
-                  <%= item_form.number_field :quantity, class: "w-16 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-white text-xs font-bold text-center focus:outline-none" %>
+                  <%= item_form.number_field :quantity, class: "w-16 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-white text-xs font-bold text-center focus:outline-none item-qty-input", min: 0 %>
                 </div>
                 <div class="flex items-center gap-1.5 text-rose-400 text-xs font-semibold">
                   <label class="cursor-pointer flex items-center gap-1 hover:text-rose-300">
-                    <%= item_form.check_box :_destroy, class: "rounded bg-slate-900 border-slate-700 text-rose-600 focus:ring-0" %>
+                    <%= item_form.check_box :_destroy, class: "rounded bg-slate-900 border-slate-700 text-rose-600 focus:ring-0 item-destroy-checkbox" %>
                     Remove
                   </label>
                 </div>
@@ -69,19 +69,19 @@
         
         <div class="divide-y divide-slate-700/60 bg-[#0f172a] rounded-xl border border-slate-700 overflow-hidden">
           <%= f.fields_for :order_items, @order.order_items.where(is_appended: true) do |item_form| %>
-            <div class="p-3.5 flex items-center justify-between gap-4">
+            <div class="p-3.5 flex items-center justify-between gap-4 order-item-row" data-price="<%= item_form.object.price || item_form.object.menu_item&.price || 0 %>">
               <div class="flex-1">
                 <span class="block text-sm font-bold text-white"><%= item_form.object.name || item_form.object.menu_item&.name || "Menu Item" %></span>
-                <span class="text-xs text-emerald-400 font-semibold">₦<%= number_with_delimiter(item_form.object.price || item_form.object.menu_item&.price || 0) %> each</span>
+                <span class="text-xs text-emerald-400 font-semibold item-unit-price" data-price="<%= item_form.object.price || item_form.object.menu_item&.price || 0 %>">₦<%= number_with_delimiter(item_form.object.price || item_form.object.menu_item&.price || 0) %> each</span>
               </div>
               <div class="flex items-center gap-3">
                 <div class="flex items-center gap-1.5">
                   <span class="text-[10px] text-slate-400 uppercase font-bold">Qty:</span>
-                  <%= item_form.number_field :quantity, class: "w-16 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-white text-xs font-bold text-center focus:outline-none" %>
+                  <%= item_form.number_field :quantity, class: "w-16 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-white text-xs font-bold text-center focus:outline-none item-qty-input", min: 0 %>
                 </div>
                 <div class="flex items-center gap-1.5 text-rose-400 text-xs font-semibold">
                   <label class="cursor-pointer flex items-center gap-1 hover:text-rose-300">
-                    <%= item_form.check_box :_destroy, class: "rounded bg-slate-900 border-slate-700 text-rose-600 focus:ring-0" %>
+                    <%= item_form.check_box :_destroy, class: "rounded bg-slate-900 border-slate-700 text-rose-600 focus:ring-0 item-destroy-checkbox" %>
                     Remove
                   </label>
                 </div>
@@ -145,7 +145,9 @@
   document.addEventListener("DOMContentLoaded", () => {
     const paymentSelect = document.getElementById("new-payment-method-select");
     const splitSection = document.getElementById("split-payment-section");
-    
+    const grandTotalInput = document.getElementById("order_grand_total");
+    const itemRows = document.querySelectorAll(".order-item-row");
+
     function toggleSplit() {
       if (!paymentSelect || !splitSection) return;
       if (paymentSelect.value === "split") {
@@ -154,10 +156,45 @@
         splitSection.classList.add("hidden");
       }
     }
-    
+
+    function calculateGrandTotal() {
+      if (!grandTotalInput) return;
+      let total = 0;
+      itemRows.forEach(row => {
+        const destroyCheckbox = row.querySelector(".item-destroy-checkbox");
+        if (destroyCheckbox && destroyCheckbox.checked) return; // skip removed items
+
+        const qtyInput = row.querySelector(".item-qty-input");
+        const priceSpan = row.querySelector(".item-unit-price");
+        
+        if (qtyInput && priceSpan) {
+          const qty = parseFloat(qtyInput.value) || 0;
+          const price = parseFloat(priceSpan.dataset.price) || 0;
+          total += qty * price;
+        }
+      });
+      grandTotalInput.value = total.toFixed(2);
+    }
+
     if (paymentSelect) {
       toggleSplit();
       paymentSelect.addEventListener("change", toggleSplit);
     }
+
+    // Attach listeners for live grand total recalculation
+    itemRows.forEach(row => {
+      const qtyInput = row.querySelector(".item-qty-input");
+      const destroyCheckbox = row.querySelector(".item-destroy-checkbox");
+
+      if (qtyInput) {
+        qtyInput.addEventListener("input", calculateGrandTotal);
+      }
+      if (destroyCheckbox) {
+        destroyCheckbox.addEventListener("change", calculateGrandTotal);
+      }
+    });
+
+    // Initial calculation on load
+    calculateGrandTotal();
   });
 </script>

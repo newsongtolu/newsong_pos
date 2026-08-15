@@ -171,7 +171,6 @@
           </div>
         <% end %>
       </div>
-
       <div style="margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
         <div class="ledger-sub-card">
           <div class="ledger-sub-title">Ancillary Packaging Breakdown</div>
@@ -195,6 +194,46 @@
           </ul>
         </div>
       </div>
+    </div>
+
+    <!-- CANCELLED ORDERS & REFUND QUEUE -->
+    <div class="ledger-section">
+      <div class="ledger-title" style="display: flex; justify-content: space-between; align-items: center;">
+        <span>Cancelled Orders & Refund Queue</span>
+        <span style="font-size: 0.75rem; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 2px 8px; border-radius: 4px;"><%= @cancelled_orders.count %> Pending Refunds</span>
+      </div>
+      <% if @cancelled_orders.present? %>
+        <div style="overflow-x: auto; margin-top: 12px;">
+          <table style="width: 100%; font-size: 0.82rem; border-collapse: collapse; text-align: left;">
+            <thead>
+              <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-muted);">
+                <th style="padding: 8px;">Order ID</th>
+                <th style="padding: 8px;">Customer</th>
+                <th style="padding: 8px;">Phone</th>
+                <th style="padding: 8px;">Amount</th>
+                <th style="padding: 8px;">Payment Method</th>
+                <th style="padding: 8px; text-align: right;">Action / Ticket</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @cancelled_orders.each do |order| %>
+                <tr style="border-bottom: 1px dashed var(--border-color);">
+                  <td style="padding: 10px 8px; font-weight: bold; color: var(--text-main);">#<%= order.id %></td>
+                  <td style="padding: 10px 8px; color: var(--text-main);"><%= order.customer_name %></td>
+                  <td style="padding: 10px 8px; color: var(--brand-bottom);"><%= order.phone %></td>
+                  <td style="padding: 10px 8px; font-weight: bold; color: var(--text-main);">₦<%= number_with_delimiter(number_with_precision(order.grand_total || order.payments.sum(:amount), precision: 2)) %></td>
+                  <td style="padding: 10px 8px; color: var(--text-muted);"><%= (order.payment_method || order.payments.pluck(:payment_method).join(', ')).titleize %></td>
+                  <td style="padding: 10px 8px; text-align: right;">
+                    <%= link_to "Review Order", admin_orders_path(search: order.id), style: "background: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-main); padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; text-decoration: none;" %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 8px;">No cancelled orders pending refund at the moment.</p>
+      <% end %>
     </div>
     
     <div class="modules-grid">
